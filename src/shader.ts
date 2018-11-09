@@ -1,7 +1,9 @@
-import { gl } from "./gl"
+import { gl } from "./webgl"
 
 export class Shader {
     shaderProgram: WebGLProgram;
+    // attribLocations: Map<string, number>; // attribute names to attrib locations
+
     constructor(vertexSource: string, fragmentSource: string) {
         function loadShader(type: number, source: string) {
             const shader = gl.createShader(type)!;
@@ -25,6 +27,7 @@ export class Shader {
             alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
         }
         this.shaderProgram = shaderProgram;
+        gl.flush();
     }
 
     use() {
