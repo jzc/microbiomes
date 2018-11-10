@@ -2,7 +2,7 @@ import { Shader } from "./shader"
 import { mat4 } from "gl-matrix"
 import { gl, bindVertexArray, createVertexArray } from "./webgl"
 import { Mesh } from "./mesh"
-import { Triangle, Cube } from "./cube"
+import { Triangle, Cube } from "./primitives"
 
 export class Scene {
     canvas: HTMLCanvasElement;
@@ -39,6 +39,8 @@ export class Scene {
         this.shader = new Shader(vertexSource, fragSource);
         this.meshes = [];
     }
+
+    
 
     draw() {
         gl.clearColor(0, 0, 0, 1);

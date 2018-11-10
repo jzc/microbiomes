@@ -2,7 +2,6 @@ import { gl } from "./webgl"
 
 export class Shader {
     shaderProgram: WebGLProgram;
-    // attribLocations: Map<string, number>; // attribute names to attrib locations
 
     constructor(vertexSource: string, fragmentSource: string) {
         function loadShader(type: number, source: string) {
