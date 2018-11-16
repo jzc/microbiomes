@@ -76,6 +76,10 @@ export class Scene {
             scene.prevX = e.clientX;
             scene.prevY = e.clientY;
         });
+        this.canvas.addEventListener("wheel", function(e: WheelEvent) {
+            scene.cameraRadius += e.deltaY > 0 ? 1 : -1;
+            if (scene.cameraRadius < 1) scene.cameraRadius = 1;
+        });
     }
 
     draw() {
