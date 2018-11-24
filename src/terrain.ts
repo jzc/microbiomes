@@ -1,13 +1,17 @@
-import { Mesh, Vertex } from "./mesh"
-import { Shader } from "./shader"
+import { Mesh } from "./mesh"
+import { colorShader } from "./shader"
 import { vec3 } from "gl-matrix"
 
+function collate(...arrs: Array<Float32Array>) {
+    return arrs.map(a => Array.from(a)).reduce((a, b)=>a.concat(b), []);
+}
+
 export class Terrain extends Mesh {
-    constructor(heightmap: number[][], shader: Shader) {
+    constructor(heightmap: number[][]) {
         let height = heightmap.length;
         let width = heightmap[0].length;
         let idx = 0;
-        let verticies: Array<Vertex> = [];
+        let verticies: Array<number[]> = [];
         let indicies: Array<number> = [];
         for (let i = 0; i < height; i++) {
             for (let j = 0; j < width; j++) {
@@ -26,17 +30,17 @@ export class Terrain extends Mesh {
                 let acdNorm = vec3.create();
                 vec3.cross(acdNorm, v, w);
                 verticies.push(
-                    {position: a, normal: abcNorm},
-                    {position: b, normal: abcNorm},
-                    {position: c, normal: abcNorm},
-                    {position: a, normal: acdNorm},
-                    {position: c, normal: acdNorm},
-                    {position: d, normal: acdNorm},
+                    collate(a, abcNorm), 
+                    collate(b, abcNorm),
+                    collate(c, abcNorm),
+                    collate(a, acdNorm),
+                    collate(c, acdNorm),
+                    collate(d, acdNorm),
                 )
                 indicies.push(idx, idx+1, idx+2, idx+3, idx+4, idx+5, idx+6);
                 idx += 6;
             }
         }
-        super(verticies, indicies, shader);
+        super(verticies, indicies, colorShader);
     }
 }

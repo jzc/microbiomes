@@ -2,31 +2,7 @@ import { Shader } from "./shader"
 import { mat4, vec3 } from "gl-matrix"
 import { gl, bindVertexArray, createVertexArray } from "./webgl"
 import { Mesh } from "./mesh"
-import { Triangle, Cube } from "./primitives"
-
-const vertexSource = `
-            attribute vec3 aVertexPosition;
-            attribute vec3 aVertexNormal;
-            
-            uniform mat4 uModel;
-            uniform mat4 uView;
-            uniform mat4 uProjection;
-
-            varying lowp vec3 vNormal;
-
-            void main() {
-                gl_Position = uProjection * uView * uModel * vec4(aVertexPosition, 1);
-                vNormal = aVertexNormal;
-            }
-        `;
-
-const fragSource = `
-    varying lowp vec3 vNormal;
-    void main() {
-        lowp vec3 color = abs(vNormal);
-        gl_FragColor = vec4(color, 1);
-    }
-`;
+import { Cube } from "./primitives"
 
 function sin(x: number) {
     return Math.sin(x*Math.PI/180);
@@ -40,7 +16,6 @@ export class Scene {
     canvas: HTMLCanvasElement;
     gl: WebGLRenderingContext;
     meshes: Array<Mesh> = [];
-    shader: Shader = new Shader(vertexSource, fragSource);
     cameraPosition: vec3 | null = null;
     cameraPitch: number = 45;
     cameraYaw: number = 45;
@@ -86,7 +61,7 @@ export class Scene {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        this.meshes.push(new Cube(this.shader));
+        this.meshes.push(new Cube());
 
         let model = mat4.create();
         let view = mat4.create();

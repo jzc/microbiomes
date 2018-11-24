@@ -1,20 +1,15 @@
-import { vec3 } from "gl-matrix"
-import { Shader } from "./shader"
+import { Shader, getVertexSize, getVertexType } from "./shader"
 import { gl, createVertexArray, bindVertexArray } from "./webgl"
 
-export interface Vertex {
-    position: vec3
-    normal: vec3
-}
-
 export class Mesh {
-    verticies: Array<Vertex>;
+    verticies: Array<number[]>;
     indicies: Array<number>;
     shader: Shader;
     vao: WebGLVertexArrayObjectOES;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
-    constructor(verticies: Array<Vertex>, indicies: Array<number>, shader: Shader) {
+
+    constructor(verticies: Array<number[]>, indicies: Array<number>, shader: Shader) {
         this.verticies = verticies;
         this.indicies = indicies;
         this.shader = shader;
@@ -25,13 +20,12 @@ export class Mesh {
     }
 
     setupMesh() {   
-        this.shader.use();   
+        // this.shader.use();   
         bindVertexArray(this.vao);
 
-        let verticies:Array<number> = [];
+        let verticies: Array<number> = [];
         for (let vert of this.verticies) {
-            verticies.push(...Array.from(vert.position));
-            verticies.push(...Array.from(vert.normal));
+            verticies.push(...vert);
         }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
@@ -41,14 +35,14 @@ export class Mesh {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indicies), gl.STATIC_DRAW);
 
         // TODO: dynamic calculate strides and offsets
-        const stride = 2*3*4
-        const positionLocation = gl.getAttribLocation(this.shader.shaderProgram, "aVertexPosition");
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, stride, 0);
-
-        const normalLocation = gl.getAttribLocation(this.shader.shaderProgram, "aVertexNormal");
-        gl.enableVertexAttribArray(normalLocation);
-        gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, stride, 3*4);
+        const stride = this.shader.vertexAttributes.map(getVertexSize).reduce((a, b) => a+b, 0);
+        let offset = 0;
+        for (let va of this.shader.vertexAttributes) {
+            const vertexPosition = gl.getAttribLocation(this.shader.shaderProgram, va.name);
+            gl.enableVertexAttribArray(vertexPosition);
+            gl.vertexAttribPointer(vertexPosition, va.components, getVertexType(va), false, stride, offset);
+            offset += getVertexSize(va);
+        }
     }
 
     draw() {
