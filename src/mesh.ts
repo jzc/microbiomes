@@ -9,7 +9,21 @@ export class Mesh {
     vao: WebGLVertexArrayObjectOES;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
-    transform: mat4;
+
+    _transform: mat4
+    get transform(): mat4 { return this._transform };
+    set transform(x: mat4) { 
+        this._transform = x;
+        this._normal = null;
+    }
+
+    _normal: mat4 | null = null;
+    get normal(): mat4 {
+        if (this._normal == null) { 
+            this._normal = mat4.transpose(mat4.create(), mat4.invert(mat4.create(), this.transform)!)
+        }
+        return this._normal!;
+    }
 
     constructor(verticies: Array<number[]>, indicies: Array<number>, shader: Shader) {
         this.verticies = verticies;
@@ -18,7 +32,7 @@ export class Mesh {
         this.vao = createVertexArray();
         this.vbo = gl.createBuffer()!;
         this.ebo = gl.createBuffer()!;
-        this.transform = mat4.create();
+        this._transform = mat4.create();
         this.setupMesh();
     }
 

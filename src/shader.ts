@@ -85,6 +85,7 @@ class ColorShader extends Shader {
         uniform mat4 uModel;
         uniform mat4 uView;
         uniform mat4 uProjection;
+        uniform mat4 uNormal;
 
         varying vec3 vPos;
         varying vec3 vNormal;
@@ -92,8 +93,7 @@ class ColorShader extends Shader {
 
         void main() {
             gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
-            vPos = vec3(uModel * vec4(aPos, 1));
-            vNormal = aNormal;
+            vNormal = mat3(uNormal) * aNormal;
             vColor = aColor;
         }
     `;
@@ -105,16 +105,16 @@ class ColorShader extends Shader {
         varying vec3 vColor;
 
         uniform vec3 uLightColor;
-        uniform vec3 uLightPos;
+        uniform vec3 uLightDir;
         uniform vec3 uViewPos;
 
-
         void main() {
-            float ambientStrength = 0.1;
+            vec3 lightDir = normalize(-uLightDir);
+
+            float ambientStrength = 0.2;
             vec3 ambient = ambientStrength * uLightColor;
             
             vec3 norm = normalize(vNormal);
-            vec3 lightDir = normalize(uLightPos - vPos);
             float diff = max(dot(norm, lightDir), 0.0);
             vec3 diffuse = diff * uLightColor;
 
