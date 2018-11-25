@@ -1,8 +1,9 @@
 import { Shader } from "./shader"
 import { mat4, vec3 } from "gl-matrix"
-import { gl, bindVertexArray, createVertexArray } from "./webgl"
+import { gl } from "./webgl"
 import { Mesh } from "./mesh"
 import { Cube } from "./primitives"
+import { Terrain } from "./terrain"
 
 function sin(x: number) {
     return Math.sin(x*Math.PI/180);
@@ -33,7 +34,7 @@ export class Scene {
     get lightPos(): vec3 {
         return this.anglesToPosition(this.lightYaw, this.lightPitch, this.lightRadius);
     }
-    
+
     prevX: number | undefined = undefined;
     prevY: number | undefined = undefined;
     ismousedown: boolean = false;
@@ -46,7 +47,20 @@ export class Scene {
         this.canvas = <HTMLCanvasElement> document.getElementById(canvasId);
         this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
         this.addEventListeners()
+
+        // Add objects
         this.meshes.push(new Cube());
+        
+        let heightmap = [
+            [0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+        ];
+        let terrain = new Terrain(heightmap);
+        mat4.scale(terrain.transform, mat4.create(), [4, 1, 4]);
+        mat4.translate(terrain.transform, terrain.transform, [-0.5, 0, -0.5]);
+        this.meshes.push(terrain);
+
     }
 
     addEventListeners() {
