@@ -61,20 +61,24 @@ export class Shader {
         gl.uniform1f(gl.getUniformLocation(this.shaderProgram, name), value);
     }
 
-    setMatrix4(name:string, value: Float32List, transpose=false) {
+    setMatrix4(name: string, value: Float32Array, transpose=false) {
         gl.uniformMatrix4fv(gl.getUniformLocation(this.shaderProgram, name), transpose, value);
+    }
+
+    setVec3(name: string, value: Float32Array) {
+        gl.uniform3fv(gl.getUniformLocation(this.shaderProgram, name), value);
     }
 }
 
 class ColorShader extends Shader {
     static readonly vertexAttributes: Array<VertexAttribute> = [
-        {name: "aPosition", components: 3, type: "float"},
+        {name: "aPos", components: 3, type: "float"},
         {name: "aNormal", components: 3, type: "float"},
         {name: "aColor", components: 3, type: "float"}
     ];
 
     static readonly vsSource = `
-        attribute vec3 aPosition;
+        attribute vec3 aPos;
         attribute vec3 aNormal;
         attribute vec3 aColor;
         
@@ -82,22 +86,46 @@ class ColorShader extends Shader {
         uniform mat4 uView;
         uniform mat4 uProjection;
 
-        varying lowp vec3 vNormal;
-        varying lowp vec3 vColor;
+        varying vec3 vPos;
+        varying vec3 vNormal;
+        varying vec3 vColor;
 
         void main() {
-            gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);
+            gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
+            vPos = vec3(uModel * vec4(aPos, 1));
             vNormal = aNormal;
             vColor = aColor;
         }
     `;
     static readonly fsSource = `
-        varying lowp vec3 vNormal;
-        varying lowp vec3 vColor;
+        precision mediump float;
+
+        varying vec3 vPos;
+        varying vec3 vNormal;
+        varying vec3 vColor;
+
+        uniform vec3 uLightColor;
+        uniform vec3 uLightPos;
+        uniform vec3 uViewPos;
+
 
         void main() {
-            // lowp vec3 color = abs(vNormal);
-            gl_FragColor = vec4(vColor, 1);
+            float ambientStrength = 0.1;
+            vec3 ambient = ambientStrength * uLightColor;
+            
+            vec3 norm = normalize(vNormal);
+            vec3 lightDir = normalize(uLightPos - vPos);
+            float diff = max(dot(norm, lightDir), 0.0);
+            vec3 diffuse = diff * uLightColor;
+
+            float specularStrength = 0.5;
+            vec3 viewDir = normalize(uViewPos - vPos);
+            vec3 reflectDir = reflect(-lightDir, norm);  
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+            vec3 specular = specularStrength * spec * uLightColor; 
+
+            vec3 result = (ambient + diffuse + specular) * vColor;
+            gl_FragColor = vec4(result, 1);
         }
     `;
 

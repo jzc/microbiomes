@@ -1,5 +1,6 @@
 import { Shader, getVertexSize, getVertexType } from "./shader"
 import { gl, createVertexArray, bindVertexArray } from "./webgl"
+import { mat4 } from "gl-matrix"
 
 export class Mesh {
     verticies: Array<number[]>;
@@ -8,6 +9,7 @@ export class Mesh {
     vao: WebGLVertexArrayObjectOES;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
+    transform: mat4;
 
     constructor(verticies: Array<number[]>, indicies: Array<number>, shader: Shader) {
         this.verticies = verticies;
@@ -16,6 +18,7 @@ export class Mesh {
         this.vao = createVertexArray();
         this.vbo = gl.createBuffer()!;
         this.ebo = gl.createBuffer()!;
+        this.transform = mat4.create();
         this.setupMesh();
     }
 

@@ -12,22 +12,41 @@ function cos(x: number) {
     return Math.cos(x*Math.PI/180);
 }
 
+const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;        
+
 export class Scene {
     canvas: HTMLCanvasElement;
     gl: WebGLRenderingContext;
     meshes: Array<Mesh> = [];
-    cameraPosition: vec3 | null = null;
+
     cameraPitch: number = 45;
     cameraYaw: number = 45;
     cameraRadius: number = 10;
+    get cameraPos(): vec3 {
+        return this.anglesToPosition(this.cameraYaw, this.cameraPitch, this.cameraRadius);
+    }
+
+    lightColor: vec3 = vec3.fromValues(1, 1, 1);
+    lightYaw: number = 0;
+    lightPitch: number = 45;
+    lightRadius: number = 5;
+    get lightPos(): vec3 {
+        return this.anglesToPosition(this.lightYaw, this.lightPitch, this.lightRadius);
+    }
+    
     prevX: number | undefined = undefined;
     prevY: number | undefined = undefined;
     ismousedown: boolean = false;
+
+    projection: mat4 = mat4.perspective(mat4.create(), 45, aspect, .1, 100);;
+    view: mat4 = mat4.create();
+
 
     constructor(canvasId: string) {
         this.canvas = <HTMLCanvasElement> document.getElementById(canvasId);
         this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
         this.addEventListeners()
+        this.meshes.push(new Cube());
     }
 
     addEventListeners() {
@@ -57,31 +76,29 @@ export class Scene {
         });
     }
 
+    anglesToPosition(yaw: number, pitch: number, r: number) {
+        return vec3.fromValues(r*sin(yaw)*cos(pitch),
+                               r*sin(pitch),
+                               r*cos(yaw)*cos(pitch))
+    }
+
+    update(dt: number) {
+        mat4.lookAt(this.view, this.cameraPos, [0, 0, 0], [0, 1, 0]);
+        this.lightYaw += dt/10;
+    }
+
     draw() {
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        this.meshes.push(new Cube());
-
-        let model = mat4.create();
-        let view = mat4.create();
-        let projection = mat4.create();
-
-        if (this.cameraPosition == null) {
-            let pos = vec3.fromValues(this.cameraRadius*sin(this.cameraYaw)*cos(this.cameraPitch),
-                                      this.cameraRadius*sin(this.cameraPitch),
-                                      this.cameraRadius*cos(this.cameraYaw)*cos(this.cameraPitch))
-            mat4.lookAt(view, pos, [0, 0, 0], [0, 1, 0]);
-        }
-
-        const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;        
-        mat4.perspective(projection, 45, aspect, .1, 100);
-
+ 
         for (let mesh of this.meshes) {
             mesh.shader.use();
-            mesh.shader.setMatrix4("uModel", model);
-            mesh.shader.setMatrix4("uView", view);
-            mesh.shader.setMatrix4("uProjection", projection);
+            mesh.shader.setVec3("uViewPos", this.cameraPos);
+            mesh.shader.setVec3("uLightPos", this.lightPos);
+            mesh.shader.setVec3("uLightColor", this.lightColor);
+            mesh.shader.setMatrix4("uModel", mesh.transform);
+            mesh.shader.setMatrix4("uView", this.view);
+            mesh.shader.setMatrix4("uProjection", this.projection);
             mesh.draw();
         }
     }
@@ -95,6 +112,7 @@ export class Scene {
             let now = Date.now();
             let delta = now-then;
             if (delta > interval) {
+                scene.update(delta);
                 scene.draw();
                 then = now - (delta % interval);
             }

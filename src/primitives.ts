@@ -5,35 +5,35 @@ export class Cube extends Mesh {
     constructor() {
         const verticies = [
             // front 
-            {position: [-1, -1,  1], normal: [ 0,  0,  1], color: [0, 0, 1]}, 
-            {position: [ 1, -1,  1], normal: [ 0,  0,  1], color: [0, 0, 1]}, 
-            {position: [ 1,  1,  1], normal: [ 0,  0,  1], color: [0, 0, 1]}, 
-            {position: [-1,  1,  1], normal: [ 0,  0,  1], color: [0, 0, 1]}, 
+            {position: [-1, -1,  1], normal: [ 0,  0,  1], color: [0, 0, 0.75]},
+            {position: [ 1, -1,  1], normal: [ 0,  0,  1], color: [0, 0, 0.75]},
+            {position: [ 1,  1,  1], normal: [ 0,  0,  1], color: [0, 0, 0.75]},
+            {position: [-1,  1,  1], normal: [ 0,  0,  1], color: [0, 0, 0.75]},
             // back
-            {position: [-1, -1, -1], normal: [ 0,  0, -1], color: [1, 0, 0]}, 
-            {position: [-1,  1, -1], normal: [ 0,  0, -1], color: [1, 0, 0]}, 
-            {position: [ 1,  1, -1], normal: [ 0,  0, -1], color: [1, 0, 0]}, 
-            {position: [ 1, -1, -1], normal: [ 0,  0, -1], color: [1, 0, 0]}, 
+            {position: [-1, -1, -1], normal: [ 0,  0, -1], color: [0, 0, 0.75]},
+            {position: [-1,  1, -1], normal: [ 0,  0, -1], color: [0, 0, 0.75]},
+            {position: [ 1,  1, -1], normal: [ 0,  0, -1], color: [0, 0, 0.75]},
+            {position: [ 1, -1, -1], normal: [ 0,  0, -1], color: [0, 0, 0.75]},
             //top
-            {position: [-1,  1, -1], normal: [ 0,  1,  0], color: [0, 0, .875]}, 
-            {position: [-1,  1,  1], normal: [ 0,  1,  0], color: [0, 0, .875]}, 
-            {position: [ 1,  1,  1], normal: [ 0,  1,  0], color: [0, 0, .875]}, 
-            {position: [ 1,  1, -1], normal: [ 0,  1,  0], color: [0, 0, .875]}, 
+            {position: [-1,  1, -1], normal: [ 0,  1,  0], color: [0, 0, 0.75]}, 
+            {position: [-1,  1,  1], normal: [ 0,  1,  0], color: [0, 0, 0.75]}, 
+            {position: [ 1,  1,  1], normal: [ 0,  1,  0], color: [0, 0, 0.75]}, 
+            {position: [ 1,  1, -1], normal: [ 0,  1,  0], color: [0, 0, 0.75]}, 
             //bottom
-            {position: [-1, -1, -1], normal: [ 0, -1,  0], color: [.875, 0, 0]}, 
-            {position: [ 1, -1, -1], normal: [ 0, -1,  0], color: [.875, 0, 0]}, 
-            {position: [ 1, -1,  1], normal: [ 0, -1,  0], color: [.875, 0, 0]}, 
-            {position: [-1, -1,  1], normal: [ 0, -1,  0], color: [.875, 0, 0]}, 
+            {position: [-1, -1, -1], normal: [ 0, -1,  0], color: [0, 0, 0.75]}, 
+            {position: [ 1, -1, -1], normal: [ 0, -1,  0], color: [0, 0, 0.75]}, 
+            {position: [ 1, -1,  1], normal: [ 0, -1,  0], color: [0, 0, 0.75]}, 
+            {position: [-1, -1,  1], normal: [ 0, -1,  0], color: [0, 0, 0.75]}, 
             //right
-            {position: [ 1, -1, -1], normal: [ 1,  0,  0], color: [0, 0, .75]}, 
-            {position: [ 1,  1, -1], normal: [ 1,  0,  0], color: [0, 0, .75]}, 
-            {position: [ 1,  1,  1], normal: [ 1,  0,  0], color: [0, 0, .75]}, 
-            {position: [ 1, -1,  1], normal: [ 1,  0,  0], color: [0, 0, .75]}, 
+            {position: [ 1, -1, -1], normal: [ 1,  0,  0], color: [0, 0, 0.75]},
+            {position: [ 1,  1, -1], normal: [ 1,  0,  0], color: [0, 0, 0.75]},
+            {position: [ 1,  1,  1], normal: [ 1,  0,  0], color: [0, 0, 0.75]},
+            {position: [ 1, -1,  1], normal: [ 1,  0,  0], color: [0, 0, 0.75]},
             //left
-            {position: [-1, -1, -1], normal: [-1,  0,  0], color: [.75, 0, 0]}, 
-            {position: [-1, -1,  1], normal: [-1,  0,  0], color: [.75, 0, 0]}, 
-            {position: [-1,  1,  1], normal: [-1,  0,  0], color: [.75, 0, 0]}, 
-            {position: [-1,  1, -1], normal: [-1,  0,  0], color: [.75, 0, 0]}, 
+            {position: [-1, -1, -1], normal: [-1,  0,  0], color: [0, 0, 0.75]},
+            {position: [-1, -1,  1], normal: [-1,  0,  0], color: [0, 0, 0.75]},
+            {position: [-1,  1,  1], normal: [-1,  0,  0], color: [0, 0, 0.75]},
+            {position: [-1,  1, -1], normal: [-1,  0,  0], color: [0, 0, 0.75]},
         ];
 
         const indices = [
