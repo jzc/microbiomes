@@ -37,7 +37,6 @@ export class Mesh {
     }
 
     setupMesh() {   
-        // this.shader.use();   
         bindVertexArray(this.vao);
 
         let verticies: Array<number> = [];
@@ -51,7 +50,6 @@ export class Mesh {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indicies), gl.STATIC_DRAW);
 
-        // TODO: dynamic calculate strides and offsets
         const stride = this.shader.vertexAttributes.map(getVertexSize).reduce((a, b) => a+b, 0);
         let offset = 0;
         for (let va of this.shader.vertexAttributes) {

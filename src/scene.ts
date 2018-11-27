@@ -1,9 +1,8 @@
-import { Shader } from "./shader"
 import { mat4, vec3 } from "gl-matrix"
 import { gl } from "./webgl"
 import { Mesh } from "./mesh"
 import { Cube } from "./primitives"
-import { Terrain } from "./terrain"
+import { Terrain, PerlinTerrain } from "./terrain"
 
 function sin(x: number) {
     return Math.sin(x*Math.PI/180);
@@ -54,7 +53,9 @@ export class Scene {
         this.addEventListeners()
 
         // Add objects
-        this.meshes.push(new Cube());
+        let cube = new Cube();
+        mat4.translate(cube.transform, mat4.create(), [0, 7, 0]);
+        this.meshes.push(cube);
         
         let heightmap = [
             [0, 0, 0, 0],
@@ -62,8 +63,9 @@ export class Scene {
             [0, 5, 5, 0],
             [0, 0, 5, 5],
         ];
-        let terrain = new Terrain(heightmap);
-        mat4.scale(terrain.transform, mat4.create(), [4, 1, 4]);
+        // let terrain = new Terrain(heightmap);
+        let terrain = new PerlinTerrain(5, 5, 25, 25);
+        mat4.scale(terrain.transform, mat4.create(), [4, 1, 4]);new Cube()
         mat4.translate(terrain.transform, terrain.transform, [-0.5, 0, -0.5]);
         this.meshes.push(terrain);
 

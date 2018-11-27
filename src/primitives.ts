@@ -48,15 +48,3 @@ export class Cube extends Mesh {
         super(verticies.map(v => v.position.concat(v.normal).concat(v.color)), indices, colorShader);
     }
 }
-
-// export class Triangle extends Mesh {
-//     constructor(shader: Shader) {
-//         const verticies = [
-//             {position: vec3.fromValues(-0.5, -0.5, 0.0), normal: vec3.fromValues(0, 0, 1)},
-//             {position: vec3.fromValues( 0.5, -0.5, 0.0), normal: vec3.fromValues(0, 0, 1)},
-//             {position: vec3.fromValues( 0.0,  0.5, 0.0), normal: vec3.fromValues(0, 0, 1)},
-//         ];
-//         const indicies = [0, 1, 2];
-//         super(verticies, indicies, shader);
-//     }
-// }
