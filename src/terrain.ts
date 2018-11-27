@@ -8,13 +8,29 @@ function collate(...arrs: Array<Float32Array>) {
 
 export class Terrain extends Mesh {
     constructor(heightmap: number[][]) {
-        let height = heightmap.length - 1;
-        let width = heightmap[0].length - 1;
-        let idx = 0;
-        let verticies: Array<number[]> = [];
-        let indicies: Array<number> = [];
+        let height = heightmap.length;
+        let width = heightmap[0].length;
+
+        // Initialize a 2d grid of positions and normal lists
+        // For each grid point, there will be up to 8 tri's
+        // touching it. The normal list stores each of the
+        // normals from these tri's.
+        let positionGrid: vec3[][] = [];
+        let normalListGrid: Array<vec3>[][] = [];
         for (let i = 0; i < height; i++) {
+            let arr1: vec3[] = [];
+            let arr2: Array<vec3>[] = [];
             for (let j = 0; j < width; j++) {
+                arr1.push(vec3.create());
+                arr2.push([]);
+            }
+            positionGrid.push(arr1);
+            normalListGrid.push(arr2);
+        }
+
+        // Add the positions and normals for each grid point.
+        for (let i = 0; i < height-1; i++) {
+            for (let j = 0; j < width-1; j++) {
                 let a = vec3.fromValues(i/height, heightmap[i][j], j/width);
                 let b = vec3.fromValues(i/height, heightmap[i][j+1], (j+1)/width);
                 let c = vec3.fromValues((i+1)/height, heightmap[i+1][j+1], (j+1)/width);
@@ -24,20 +40,58 @@ export class Terrain extends Mesh {
                 let w = vec3.sub(vec3.create(), d, a);
                 let abcNorm = vec3.cross(vec3.create(), u, v);
                 let acdNorm = vec3.cross(vec3.create(), v, w);
+
+                let norms = [abcNorm, acdNorm];
+                for (let [ii, jj] of [[i, j], [i, j+1], [i+1, j+1], [i+1, j]]) {
+                    normalListGrid[ii][jj].push(...norms);
+                }
+
+                positionGrid[i][j] = a;
+                positionGrid[i][j+1] = b;
+                positionGrid[i+1][j+1] = c;
+                positionGrid[i+1][j] = d;
+            }
+        }
+
+        // Take each of the normals from each grid point and average them.
+        let averageNormalGrid = normalListGrid.map(function (arr) {
+            return arr.map(function (norms) {
+                let sum = norms.reduce((acc, n) => vec3.add(acc, acc, n), vec3.fromValues(0, 0, 0));
+                let average = vec3.scale(vec3.create(), sum, 1/norms.length);
+                return average;
+            })
+        })
+
+
+        // Now construct all the verticies for the mesh.
+        let idx = 0;
+        let indicies: Array<number> = [];
+        let verticies: Array<number[]> = [];
+        for (let i = 0; i < height-1; i++) {
+            for (let j = 0; j < width-1; j++) {
+                let a = positionGrid[i][j];
+                let b = positionGrid[i][j+1];
+                let c = positionGrid[i+1][j+1];
+                let d = positionGrid[i+1][j];
+
+                let an = averageNormalGrid[i][j];
+                let bn = averageNormalGrid[i][j+1];
+                let cn = averageNormalGrid[i+1][j+1];
+                let dn = averageNormalGrid[i+1][j];
+
                 let color = vec3.fromValues(0, 0, 0.75);
 
                 verticies.push(
-                    collate(a, abcNorm, color), 
-                    collate(b, abcNorm, color),
-                    collate(c, abcNorm, color),
-                    collate(a, acdNorm, color),
-                    collate(c, acdNorm, color),
-                    collate(d, acdNorm, color),
+                    collate(a, an, color),
+                    collate(b, bn, color),
+                    collate(c, cn, color),
+                    collate(d, dn, color),
                 )
-                indicies.push(idx, idx+1, idx+2, idx+3, idx+4, idx+5);
-                idx += 6;
+                indicies.push(idx, idx+1, idx+2, idx, idx+2, idx+3);
+                idx += 4;
             }
         }
+
         super(verticies, indicies, colorShader);
     }
 }
