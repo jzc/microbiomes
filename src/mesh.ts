@@ -9,6 +9,7 @@ export class Mesh {
     vao: WebGLVertexArrayObjectOES;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
+    drawMode: number = gl.TRIANGLES;
 
     _transform: mat4
     get transform(): mat4 { return this._transform };
@@ -62,7 +63,7 @@ export class Mesh {
 
     draw() {
         bindVertexArray(this.vao);
-        gl.drawElements(gl.TRIANGLES, this.indicies.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(this.drawMode, this.indicies.length, gl.UNSIGNED_SHORT, 0);
     }
 
 }

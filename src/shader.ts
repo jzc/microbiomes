@@ -118,10 +118,10 @@ class ColorShader extends Shader {
             float diff = max(dot(norm, lightDir), 0.0);
             vec3 diffuse = diff * uLightColor;
 
-            float specularStrength = 0.5;
+            float specularStrength = 0.1;
             vec3 viewDir = normalize(uViewPos - vPos);
             vec3 reflectDir = reflect(-lightDir, norm);  
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
             vec3 specular = specularStrength * spec * uLightColor; 
 
             vec3 result = (ambient + diffuse + specular) * vColor;
@@ -135,3 +135,42 @@ class ColorShader extends Shader {
 }
 
 export const colorShader = new ColorShader();
+
+class BasicShader extends Shader {
+    static readonly vertexAttributes: Array<VertexAttribute> = [
+        {name: "aPos", components: 3, type: "float"},
+        {name: "aColor", components: 3, type: "float"}
+    ];
+
+    static readonly vsSource = `
+        attribute vec3 aPos;
+        attribute vec3 aColor;
+        
+        uniform mat4 uModel;
+        uniform mat4 uView;
+        uniform mat4 uProjection;
+
+        varying vec3 vColor;
+
+        void main() {
+            gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
+            vColor = aColor;
+        }
+    `;
+
+    static readonly fsSource = `
+        precision mediump float;
+        
+        varying vec3 vColor;
+
+        void main() {
+            gl_FragColor = vec4(vColor, 1);
+        }
+    `;
+
+    constructor() {
+        super(BasicShader.vsSource, BasicShader.fsSource, BasicShader.vertexAttributes);
+    }
+}
+
+export const basicShader = new BasicShader();

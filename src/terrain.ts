@@ -1,6 +1,6 @@
 import { Mesh } from "./mesh"
-import { colorShader } from "./shader"
-import { vec3, vec2 } from "gl-matrix"
+import { colorShader, basicShader } from "./shader"
+import { vec3, vec2 , mat4 } from "gl-matrix"
 
 function collate(...arrs: Array<Float32Array>) {
     return arrs.map(a => Array.from(a)).reduce((a, b) => a.concat(b), []);
@@ -159,6 +159,49 @@ export class PerlinTerrain extends Terrain {
             }
             heightmap.push(arr)
         }
+
+        const kernelWidth = 5;
+        const halfKernel = Math.floor(kernelWidth/2);
+        const smoothIters = 4;
+        for (let ns = 0; ns < smoothIters; ns++) {
+            for (let y = 0; y < ny; y++) {
+                for (let x = 0; x < nx; x++) {
+                    let sum = 0;
+                    let n = 0;
+                    for (let i = x-halfKernel; i < x+halfKernel; i++) {
+                        if (i < 0 || i >= nx) continue;
+                        for (let j = y-halfKernel; j < y+halfKernel; j++) {
+                            if (j < 0 || j >= ny) continue;
+                            sum += heightmap[j][i];
+                            n += 1;
+                        }
+                    }
+                    heightmap[y][x] = sum/n;
+                }
+            }
+        }
+
         super(heightmap);
+    }
+}
+
+export class NormalMesh extends Mesh {
+    constructor(m: Mesh, color: vec3, length: number) {
+        let verticies: Array<number[]> = [];
+        let indicies: Array<number> = [];
+        let idx = 0;
+        let normalTransform = mat4.transpose(mat4.create(), mat4.invert(mat4.create(), m.transform)!);
+        for (let vertex of m.verticies) {
+            let p1 = vec3.transformMat4(vec3.create(),vec3.fromValues(vertex[0], vertex[1], vertex[2]), m.transform);
+            let n  = vec3.transformMat4(vec3.create(), vec3.fromValues(vertex[3], vertex[4], vertex[5]), normalTransform);
+            vec3.scale(n, vec3.normalize(n, n), length);
+            let p2 = vec3.add(vec3.create(), p1, n);
+
+            verticies.push(collate(p1, color), collate(p2, color));
+            indicies.push(idx, idx+1);
+            idx += 2;
+        }
+        super(verticies, indicies, basicShader);
+        // this.transform = m.transform;
     }
 }

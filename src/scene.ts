@@ -2,7 +2,7 @@ import { mat4, vec3 } from "gl-matrix"
 import { gl } from "./webgl"
 import { Mesh } from "./mesh"
 import { Cube } from "./primitives"
-import { Terrain, PerlinTerrain } from "./terrain"
+import { Terrain, PerlinTerrain, NormalMesh } from "./terrain"
 
 function sin(x: number) {
     return Math.sin(x*Math.PI/180);
@@ -57,17 +57,14 @@ export class Scene {
         mat4.translate(cube.transform, mat4.create(), [0, 7, 0]);
         this.meshes.push(cube);
         
-        let heightmap = [
-            [0, 0, 0, 0],
-            [0, 5, 5, 0],
-            [0, 5, 5, 0],
-            [0, 0, 5, 5],
-        ];
         // let terrain = new Terrain(heightmap);
-        let terrain = new PerlinTerrain(5, 5, 25, 25);
-        mat4.scale(terrain.transform, mat4.create(), [4, 1, 4]);new Cube()
+        let terrain = new PerlinTerrain(5, 5, 100, 100);
+        mat4.scale(terrain.transform, mat4.create(), [20, 3, 20]);
         mat4.translate(terrain.transform, terrain.transform, [-0.5, 0, -0.5]);
         this.meshes.push(terrain);
+        // let normals = new NormalMesh(terrain, vec3.fromValues(1, 0, 0), .2);
+        // normals.drawMode = gl.LINES;
+        // this.meshes.push(normals);
 
     }
 
@@ -102,7 +99,7 @@ export class Scene {
 
     update(dt: number) {
         mat4.lookAt(this.view, this.cameraPos, [0, 0, 0], [0, 1, 0]);
-        this.lightYaw += dt/10;
+        // this.lightYaw += dt/10;
     }
 
     draw() {
