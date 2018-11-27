@@ -51,6 +51,14 @@ export class Scene {
         this.canvas = <HTMLCanvasElement> document.getElementById(canvasId);
         this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
         this.addEventListeners()
+        this.createScene();
+    }
+
+    // TODO: Scene and render properties 
+    // scene properties requrie a recalcuation of the meshes (like terrain)
+    // render properties do not require recalculation (like lighting)
+    createScene() {
+        this.meshes = [];
 
         // Add objects
         let cube = new Cube();
@@ -62,10 +70,9 @@ export class Scene {
         mat4.scale(terrain.transform, mat4.create(), [20, 3, 20]);
         mat4.translate(terrain.transform, terrain.transform, [-0.5, 0, -0.5]);
         this.meshes.push(terrain);
-        // let normals = new NormalMesh(terrain, vec3.fromValues(1, 0, 0), .2);
-        // normals.drawMode = gl.LINES;
-        // this.meshes.push(normals);
-
+        let normals = new NormalMesh(terrain, vec3.fromValues(1, 0, 0), .2);
+        normals.drawMode = gl.LINES;
+        this.meshes.push(normals);
     }
 
     addEventListeners() {

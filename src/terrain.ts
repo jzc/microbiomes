@@ -17,15 +17,19 @@ export class Terrain extends Mesh {
         // normals from these tri's.
         let positionGrid: vec3[][] = [];
         let normalListGrid: Array<vec3>[][] = [];
+        let indexGrid: number[][] = [];
         for (let i = 0; i < height; i++) {
             let arr1: vec3[] = [];
             let arr2: Array<vec3>[] = [];
+            let arr3: number[] = [];
             for (let j = 0; j < width; j++) {
                 arr1.push(vec3.create());
                 arr2.push([]);
+                arr3.push(-1);
             }
             positionGrid.push(arr1);
             normalListGrid.push(arr2);
+            indexGrid.push(arr3);
         }
 
         // Add the positions and normals for each grid point.
@@ -79,16 +83,30 @@ export class Terrain extends Mesh {
                 let cn = averageNormalGrid[i+1][j+1];
                 let dn = averageNormalGrid[i+1][j];
 
-                let color = vec3.fromValues(0, 0, 0.75);
+                let color = vec3.fromValues(62/255, 145/255, 76/255);
 
-                verticies.push(
-                    collate(a, an, color),
-                    collate(b, bn, color),
-                    collate(c, cn, color),
-                    collate(d, dn, color),
-                )
-                indicies.push(idx, idx+1, idx+2, idx, idx+2, idx+3);
-                idx += 4;
+                if (indexGrid[i][j] == -1) {
+                    verticies.push(collate(a, an, color));
+                    indexGrid[i][j] = idx++;  
+                } 
+                if (indexGrid[i][j+1] == -1) {
+                    verticies.push(collate(b, bn, color));
+                    indexGrid[i][j+1] = idx++;  
+                } 
+                if (indexGrid[i+1][j+1] == -1) {
+                    verticies.push(collate(c, cn, color));
+                    indexGrid[i+1][j+1] = idx++;  
+                } 
+                if (indexGrid[i+1][j] == -1) {
+                    verticies.push(collate(d, dn, color));
+                    indexGrid[i+1][j] = idx++;  
+                } 
+
+                let aidx = indexGrid[i][j];
+                let bidx = indexGrid[i][j+1];
+                let cidx = indexGrid[i+1][j+1];
+                let didx = indexGrid[i+1][j];
+                indicies.push(aidx, bidx, cidx, aidx, cidx, didx);
             }
         }
 
