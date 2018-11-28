@@ -4,6 +4,8 @@ const oes_vao_ext = gl.getExtension("OES_vertex_array_object")!;
 
 gl.clearDepth(1);
 gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.CULL_FACE);
+gl.cullFace(gl.BACK);
 
 export function createVertexArray() {
     return oes_vao_ext.createVertexArrayOES();

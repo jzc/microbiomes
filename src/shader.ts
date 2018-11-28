@@ -70,6 +70,15 @@ export class Shader {
     }
 }
 
+export function hasNormals(s: Shader) {
+    for (let va of s.vertexAttributes) {
+        if (va.name == "aNormal") {
+            return true;
+        }
+    }
+    return false;
+}
+
 class ColorShader extends Shader {
     static readonly vertexAttributes: Array<VertexAttribute> = [
         {name: "aPos", components: 3, type: "float"},
