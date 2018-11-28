@@ -1,6 +1,7 @@
 import { Forest } from "./forest"
 
-let scene = new Forest("glcanvas")
+let canvas = <HTMLCanvasElement> document.getElementById("glcanvas");
+let scene = new Forest(canvas);
 scene.setup();
 
 let then = Date.now();

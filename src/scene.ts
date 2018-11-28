@@ -58,8 +58,8 @@ export class Scene {
     params: HTMLInputMap = new HTMLInputMap();
 
 
-    constructor(canvasId: string) {
-        this.canvas = <HTMLCanvasElement> document.getElementById(canvasId);
+    constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
         this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
         this.addEventListeners()
     }
@@ -84,9 +84,9 @@ export class Scene {
         }
 
         this.params = new HTMLInputMap();
-        this.params.addRange("lightYaw", sceneParams, 0, 360, 0, 1);
-        this.params.addRange("lightPitch", sceneParams, 0, 180, 45, 1);
-        this.params.addCheckbox("drawNormals", sceneParams, false);
+        this.params.addRange("lightYaw", renderParams, 0, 360, 0, 1);
+        this.params.addRange("lightPitch", renderParams, 0, 180, 45, 1);
+        this.params.addCheckbox("drawNormals", renderParams, false);
         this.generate();
     }
 
@@ -112,15 +112,15 @@ export class Scene {
 
     addEventListeners() {
         let scene = this;
-        this.canvas.addEventListener("mousedown", function(e: MouseEvent) {
+        this.canvas.onmousedown = function(e: MouseEvent) {
             scene.ismousedown = true;
             scene.prevX = e.clientX;
             scene.prevY = e.clientY;
-        });
-        this.canvas.addEventListener("mouseup",  function() {
+        };
+        this.canvas.onmouseup = function() {
             scene.ismousedown = false;
-        });
-        this.canvas.addEventListener("mousemove", function(e: MouseEvent) {
+        };
+        this.canvas.onmousemove = function(e: MouseEvent) {
             if (scene.prevX == undefined) scene.prevX = e.clientX;
             if (scene.prevY == undefined) scene.prevY = e.clientY;
             if (!scene.ismousedown) return;
@@ -130,11 +130,11 @@ export class Scene {
             if (scene.cameraPitch <= -90) scene.cameraPitch = -89.9;
             scene.prevX = e.clientX;
             scene.prevY = e.clientY;
-        });
-        this.canvas.addEventListener("wheel", function(e: WheelEvent) {
+        };
+        this.canvas.onwheel = function(e: WheelEvent) {
             scene.cameraRadius += e.deltaY > 0 ? 1 : -1;
             if (scene.cameraRadius < 1) scene.cameraRadius = 1;
-        });
+        };
     }
 
     update(dt: number) {
