@@ -47,7 +47,7 @@ export class Scene {
         let pitch = <number> this.params.get("lightPitch");
         return vec3.scale(vec3.create(), anglesToPosition(yaw, pitch, 1), -1);
     }
-    lightProjection = mat4.ortho(mat4.create(), -10, 10, -10, 10, 1, 2*this.lightRadius);
+    lightProjection = mat4.ortho(mat4.create(), -40, 40, -40, 40, 1, 2*this.lightRadius);
     get lightView() {
         let pos = vec3.scale(vec3.create(), this.lightDir, -this.lightRadius);
         return mat4.lookAt(mat4.create(), pos,

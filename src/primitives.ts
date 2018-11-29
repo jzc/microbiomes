@@ -141,4 +141,82 @@ export class DebugQuad extends Mesh {
         ]
         super(verticies, indices, debugShader);
     }
+}  
+
+export class Cylinder extends Mesh {
+    constructor(cap: boolean, n: number, color: vec3) {
+        let verticies: Array<number[]> = [];
+        let indices: Array<number> = [];
+        let idx = 0;
+        let np = n;
+        let nVerticies = 2*n;
+
+        for (let i = 0; i < n; i++) {
+            let th = (i/np)*2*Math.PI;
+            let x = Math.sin(th);
+            let z = Math.cos(th);
+            
+            let a = vec3.fromValues(x, 1, z);
+            let b = vec3.fromValues(x, -1, z);
+            let n = vec3.fromValues(x, 0, z);
+
+            verticies.push(
+                collate(a, n, color),
+                collate(b, n, color),
+            )
+
+            indices.push(
+                idx+0,
+                idx+1,
+                (idx+2)%nVerticies,
+                idx+1,
+                (idx+3)%nVerticies,
+                (idx+2)%nVerticies,
+            );
+            idx += 2;
+        }
+
+        if (cap) {
+            let ca = vec3.fromValues(0, 1, 0);
+            let cb = vec3.fromValues(0, -1, 0);
+            let cai = verticies.length;
+            verticies.push(collate(ca, ca, color));
+            let cbi = verticies.length;
+            verticies.push(collate(cb, cb, color));
+
+            let initAi=-1, initBi=-1;
+
+            for (let i = 0; i < n; i++) {
+                let th = i/n*2*Math.PI;
+                let x = Math.sin(th);
+                let z = Math.cos(th);
+                
+                let a = vec3.fromValues(x, 1, z);
+                let b = vec3.fromValues(x, -1, z);
+
+                let ai = verticies.length;
+                verticies.push(collate(a, ca, color));
+                let bi = verticies.length;
+                verticies.push(collate(b, cb, color));
+                
+                if (i == 0) {
+                    initAi = ai;
+                    initBi = bi;
+                } 
+                
+                if (i == n-1) {
+                    indices.push(
+                        ai, initAi, cai,
+                        bi, initBi, cbi,
+                    )
+                } else {
+                    indices.push(
+                        ai, ai+2, cai,
+                        bi, bi+2, cbi,
+                    )
+                }
+            }            
+        }
+        super(verticies, indices, colorShader);
+    }
 }

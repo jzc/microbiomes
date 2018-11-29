@@ -131,7 +131,7 @@ class ColorShader extends Shader {
             projCoords = projCoords * 0.5 + 0.5; 
             float closestDepth = texture(shadowMap, projCoords.xy).r;   
             float currentDepth = projCoords.z;  
-            float bias = 0.005;
+            float bias = 0.01;
             // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0; 
             float shadow = 0.0;
             vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
