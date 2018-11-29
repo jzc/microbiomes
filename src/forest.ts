@@ -1,5 +1,5 @@
 import { Scene } from "./scene"
-import { Cube, Sphere } from "./primitives"
+import { Cube, Sphere, DebugQuad } from "./primitives"
 import { PerlinTerrain } from "./terrain"
 import { mat4, vec3 } from "gl-matrix"
 
@@ -18,5 +18,7 @@ export class Forest extends Scene {
         mat4.scale(terrain.transform, mat4.create(), [20, 3, 20]);
         mat4.translate(terrain.transform, terrain.transform, [-0.5, 0, -0.5]);
         this.meshes.push(terrain);
+
+        this.meshes.push(new DebugQuad());
     }
 }

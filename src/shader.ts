@@ -95,15 +95,19 @@ class ColorShader extends Shader {
         uniform mat4 uView;
         uniform mat4 uProjection;
         uniform mat4 uNormal;
+        uniform mat4 uLightSpaceMatrix;
 
         out vec3 vPos;
         out vec3 vNormal;
         out vec3 vColor;
+        out vec4 vFragPosLightSpace;
 
         void main() {
-            gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
+            gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
             vNormal = mat3(uNormal) * aNormal;
+            vPos = vec3(uModel * vec4(aPos, 1.0));
             vColor = aColor;
+            vFragPosLightSpace = uLightSpaceMatrix * vec4(vPos, 1.0);
         }
     `;
     static readonly fsSource = `#version 300 es
@@ -112,12 +116,36 @@ class ColorShader extends Shader {
         in vec3 vPos;
         in vec3 vNormal;
         in vec3 vColor;
+        in vec4 vFragPosLightSpace;
 
         uniform vec3 uLightColor;
         uniform vec3 uLightDir;
         uniform vec3 uViewPos;
 
+        uniform sampler2D shadowMap;
+
         out vec4 fragColor;
+
+        float ShadowCalculation() {
+            vec3 projCoords = vFragPosLightSpace.xyz / vFragPosLightSpace.w;
+            projCoords = projCoords * 0.5 + 0.5; 
+            float closestDepth = texture(shadowMap, projCoords.xy).r;   
+            float currentDepth = projCoords.z;  
+            float bias = 0.005;
+            // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0; 
+            float shadow = 0.0;
+            vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+            for(int x = -1; x <= 1; ++x)
+            {
+                for(int y = -1; y <= 1; ++y)
+                {
+                    float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+                    shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+                }    
+            }
+            shadow /= 9.0; 
+            return shadow;
+        }
 
         void main() {
             vec3 lightDir = normalize(-uLightDir);
@@ -135,7 +163,8 @@ class ColorShader extends Shader {
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
             vec3 specular = specularStrength * spec * uLightColor; 
 
-            vec3 result = (ambient + diffuse + specular) * vColor;
+            float shadow = ShadowCalculation();
+            vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * vColor;
             fragColor = vec4(result, 1);
         }
     `;
@@ -187,3 +216,62 @@ class BasicShader extends Shader {
 }
 
 export const basicShader = new BasicShader();
+
+class DebugShader extends Shader {
+    static readonly vsSource = `#version 300 es
+        layout (location = 0) in vec3 aPos;
+        layout (location = 2) in vec2 aTexCoords;
+
+        out vec2 vTexCoords;
+
+        void main() {
+            gl_Position = vec4(aPos, 1);
+            vTexCoords = aTexCoords;
+        }
+    `
+
+    static readonly fsSource = `#version 300 es
+        precision mediump float;
+
+        in vec2 vTexCoords;
+
+        uniform sampler2D tex;
+
+        out vec4 fragColor;
+
+        void main() {
+            fragColor = texture(tex, vTexCoords);
+        }
+    `
+
+    constructor() {
+        super(DebugShader.vsSource, DebugShader.fsSource, []);
+    }
+}
+
+export const debugShader = new DebugShader();
+
+class ShadowShader extends Shader {
+    static readonly vsSource = `#version 300 es
+        layout (location = 0) in vec3 aPos;
+
+        uniform mat4 uLightSpaceMatrix;
+        uniform mat4 uModel;
+
+        void main() {
+            gl_Position = uLightSpaceMatrix * uModel * vec4(aPos, 1.0);
+        }
+    `;
+
+    static readonly fsSource = `#version 300 es
+        void main() {
+
+        }
+    `;
+
+    constructor() {
+        super(ShadowShader.vsSource, ShadowShader.fsSource, []);
+    }
+}
+
+export const shadowShader = new ShadowShader();

@@ -1,6 +1,6 @@
 import { Mesh, collate } from "./mesh"
 import { vec3 } from "gl-matrix"
-import { basicShader, colorShader } from "./shader";
+import { basicShader, colorShader, debugShader } from "./shader";
 
 const verticies = [
     // front 
@@ -125,5 +125,20 @@ export class Sphere extends Mesh {
         }
 
         super(verticies, indices, colorShader);
+    }
+}
+
+export class DebugQuad extends Mesh {
+    constructor() {
+        let verticies = [
+            [-1, -1, 0, 0, 0, 0, 0, 0],
+            [-.75, -1, 0, 0, 0, 0, 1, 0],
+            [-.75, -.75, 0, 0, 0, 0, 1, 1],
+            [-1, -.75, 0, 0, 0, 0, 0, 1],
+        ]
+        let indices = [
+            0, 1, 2, 0, 2, 3
+        ]
+        super(verticies, indices, debugShader);
     }
 }

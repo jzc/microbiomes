@@ -1,8 +1,8 @@
 import { mat4, vec3 } from "gl-matrix"
 import { gl } from "./webgl"
 import { Mesh, NormalMesh } from "./mesh"
-import { UnlitCube } from "./primitives"
-import { colorShader, hasNormals } from "./shader";
+import { UnlitCube, DebugQuad } from "./primitives"
+import { colorShader, hasNormals, shadowShader } from "./shader";
 
 function sin(x: number) {
     return Math.sin(x*Math.PI/180);
@@ -47,20 +47,52 @@ export class Scene {
         let pitch = <number> this.params.get("lightPitch");
         return vec3.scale(vec3.create(), anglesToPosition(yaw, pitch, 1), -1);
     }
+    lightProjection = mat4.ortho(mat4.create(), -10, 10, -10, 10, 1, 2*this.lightRadius);
+    get lightView() {
+        let pos = vec3.scale(vec3.create(), this.lightDir, -this.lightRadius);
+        return mat4.lookAt(mat4.create(), pos,
+         vec3.add(vec3.create(), pos, this.lightDir), [0, 1, 0]);
+    }
+    get lightSpaceMatrix() {
+        return mat4.multiply(mat4.create(), this.lightProjection, this.lightView);
+    }
     
     prevX: number | undefined = undefined;
     prevY: number | undefined = undefined;
     ismousedown: boolean = false;
 
-    projection: mat4 = mat4.perspective(mat4.create(), 45, aspect, .1, 100);;
+    projection: mat4 = mat4.perspective(mat4.create(), 45, aspect, .1, 100);
     view: mat4 = mat4.create();
 
     params: HTMLInputMap = new HTMLInputMap();
+
+    shadowMapFbo: WebGLFramebuffer;
+    shadowMapTexture: WebGLTexture;
+    shadowWidth = 1024;
+    shadowHeight = 1024;
 
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
+
+        this.shadowMapFbo = gl.createFramebuffer()!;
+        this.shadowMapTexture = gl.createTexture()!;
+
+        gl.bindTexture(gl.TEXTURE_2D, this.shadowMapTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24,
+            this.shadowWidth, this.shadowHeight, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this.shadowMapTexture, 0);
+        gl.drawBuffers([gl.NONE]);
+        gl.readBuffer(gl.NONE);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null); 
+
         this.addEventListeners()
     }
 
@@ -143,8 +175,24 @@ export class Scene {
     }
 
     draw() {
+        gl.viewport(0, 0, this.shadowWidth, this.shadowHeight);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFbo);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        shadowShader.use()
+        shadowShader.setMatrix4("uLightSpaceMatrix", this.lightSpaceMatrix);
+        for (let mesh of this.meshes) {
+            if (mesh instanceof DebugQuad ||
+                mesh instanceof NormalMesh) continue
+            shadowShader.setMatrix4("uModel", mesh.transform);
+            mesh.draw()
+        }
+        
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.shadowMapTexture);
+
+        gl.viewport(0, 0, gl.canvas.clientWidth, gl.canvas.clientHeight);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
- 
         for (let mesh of this.meshes) {
             if (!(<boolean> this.params.get("drawNormals")) &&
                 mesh instanceof NormalMesh) continue;
@@ -156,6 +204,7 @@ export class Scene {
                 mesh.shader.setVec3("uLightColor", this.lightColor);
                 mesh.shader.setMatrix4("uNormal", mesh.normal);
             }
+            mesh.shader.setMatrix4("uLightSpaceMatrix", this.lightSpaceMatrix);
             mesh.shader.setMatrix4("uModel", mesh.transform);
             mesh.shader.setMatrix4("uView", this.view);
             mesh.shader.setMatrix4("uProjection", this.projection);
