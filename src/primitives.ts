@@ -1,5 +1,6 @@
-import { Mesh } from "./mesh"
+import { Mesh, collate } from "./mesh"
 import { colorShader, basicShader } from "./shader"
+import { vec3 } from "gl-matrix"
 
 const verticies = [
     // front 
@@ -52,5 +53,77 @@ export class Cube extends Mesh {
 export class UnlitCube extends Mesh {
     constructor(color: number[]) {
         super(verticies.map(v => v.position.concat(color)), indices, basicShader);        
+    }
+}
+
+export class Sphere extends Mesh {
+    constructor(n: number, color: vec3) {
+        let i = 0;
+        let a = vec3.fromValues(Math.sin(1*Math.PI/4), 0, Math.cos(1*Math.PI/4));
+        let b = vec3.fromValues(Math.sin(3*Math.PI/4), 0, Math.cos(3*Math.PI/4));
+        let c = vec3.fromValues(Math.sin(5*Math.PI/4), 0, Math.cos(5*Math.PI/4));
+        let d = vec3.fromValues(Math.sin(7*Math.PI/4), 0, Math.cos(7*Math.PI/4));
+        let e = vec3.fromValues(0, 1, 0);
+        let f = vec3.fromValues(0, -1, 0);
+        let ai, bi, ci, di, ei, fi;
+        let positions = [
+            (ai = i++, a),
+            (bi = i++, b),
+            (ci = i++, c),
+            (di = i++, d),
+            (ei = i++, e),
+            (fi = i++, f),
+        ];
+        
+        let tris: Array<[number, number, number]> = [
+            [ei, ai, bi], [fi, bi, ai],
+            [ei, di, ai], [fi, ai, di],
+            [ei, ci, di], [fi, di, ci],
+            [ei, bi, ci], [fi, ci, bi],
+        ];
+
+        function subdivide(triIdxs: [number, number, number]): Array<[number, number, number]> {
+            let [ai, bi, ci] = triIdxs;
+            let [a, b, c] = [positions[ai], positions[bi], positions[ci]];
+
+            let ac = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, c), 1/2);
+            let ab = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, b), 1/2);
+            let bc = vec3.scale(vec3.create(), vec3.add(vec3.create(), b, c), 1/2);
+
+            let aci = positions.length;
+            positions.push(ac);
+            let abi = positions.length;
+            positions.push(ab);
+            let bci = positions.length;
+            positions.push(bc);
+
+            return [
+                [ai, abi, aci],
+                [abi, bci, aci],
+                [abi, bi, bci],
+                [aci, bci, ci],
+            ]
+        }
+
+        for (let i = 0; i < n; i++) {
+            let newTris: Array<[number, number, number]>  = [];
+            for (let tri of tris) {
+                newTris.push(...subdivide(tri))
+            }
+            tris = newTris;
+        }
+
+        let indices = [];
+        for (let tri of tris) {
+            indices.push(...tri);
+        }
+
+        let verticies = [];
+        for (let position of positions) {
+            let p = vec3.normalize(vec3.create(), position);
+            verticies.push(collate(p, p, color));
+        }
+
+        super(verticies, indices, colorShader);
     }
 }
