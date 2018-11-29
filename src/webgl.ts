@@ -1,16 +1,8 @@
 const canvas = <HTMLCanvasElement> document.getElementById("glcanvas");
-export const gl = canvas.getContext("webgl")!;
-const oes_vao_ext = gl.getExtension("OES_vertex_array_object")!;
+export const gl = canvas.getContext("webgl2")!;
 
 gl.clearDepth(1);
+gl.clearColor(0, 0, 0, 1);
 gl.enable(gl.DEPTH_TEST);
 gl.enable(gl.CULL_FACE);
 gl.cullFace(gl.BACK);
-
-export function createVertexArray() {
-    return oes_vao_ext.createVertexArrayOES();
-}
-
-export function bindVertexArray(vao: WebGLVertexArrayObjectOES) {
-    oes_vao_ext.bindVertexArrayOES(vao);
-}

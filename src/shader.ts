@@ -86,19 +86,19 @@ class ColorShader extends Shader {
         {name: "aColor", components: 3, type: "float"}
     ];
 
-    static readonly vsSource = `
-        attribute vec3 aPos;
-        attribute vec3 aNormal;
-        attribute vec3 aColor;
+    static readonly vsSource = `#version 300 es
+        layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aNormal;
+        layout (location = 2) in vec3 aColor;
         
         uniform mat4 uModel;
         uniform mat4 uView;
         uniform mat4 uProjection;
         uniform mat4 uNormal;
 
-        varying vec3 vPos;
-        varying vec3 vNormal;
-        varying vec3 vColor;
+        out vec3 vPos;
+        out vec3 vNormal;
+        out vec3 vColor;
 
         void main() {
             gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
@@ -106,16 +106,18 @@ class ColorShader extends Shader {
             vColor = aColor;
         }
     `;
-    static readonly fsSource = `
+    static readonly fsSource = `#version 300 es
         precision mediump float;
 
-        varying vec3 vPos;
-        varying vec3 vNormal;
-        varying vec3 vColor;
+        in vec3 vPos;
+        in vec3 vNormal;
+        in vec3 vColor;
 
         uniform vec3 uLightColor;
         uniform vec3 uLightDir;
         uniform vec3 uViewPos;
+
+        out vec4 fragColor;
 
         void main() {
             vec3 lightDir = normalize(-uLightDir);
@@ -134,7 +136,7 @@ class ColorShader extends Shader {
             vec3 specular = specularStrength * spec * uLightColor; 
 
             vec3 result = (ambient + diffuse + specular) * vColor;
-            gl_FragColor = vec4(result, 1);
+            fragColor = vec4(result, 1);
         }
     `;
 
@@ -151,15 +153,15 @@ class BasicShader extends Shader {
         {name: "aColor", components: 3, type: "float"}
     ];
 
-    static readonly vsSource = `
-        attribute vec3 aPos;
-        attribute vec3 aColor;
+    static readonly vsSource = `#version 300 es
+        layout (location = 0) in vec3 aPos;
+        layout (location = 2) in vec3 aColor;
         
         uniform mat4 uModel;
         uniform mat4 uView;
         uniform mat4 uProjection;
 
-        varying vec3 vColor;
+        out vec3 vColor;
 
         void main() {
             gl_Position = uProjection * uView * uModel * vec4(aPos, 1);
@@ -167,13 +169,15 @@ class BasicShader extends Shader {
         }
     `;
 
-    static readonly fsSource = `
+    static readonly fsSource = `#version 300 es
         precision mediump float;
         
-        varying vec3 vColor;
+        in vec3 vColor;
+
+        out vec4 fragColor;
 
         void main() {
-            gl_FragColor = vec4(vColor, 1);
+            fragColor = vec4(vColor, 1);
         }
     `;
 

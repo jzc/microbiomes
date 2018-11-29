@@ -1,15 +1,18 @@
-import { Shader, getVertexSize, getVertexType, basicShader } from "./shader"
-import { gl, createVertexArray, bindVertexArray } from "./webgl"
+import { Shader, basicShader } from "./shader";
+import { gl } from "./webgl"
 import { mat4, vec3 } from "gl-matrix"
+
+const colorVertexLength = 9;
+const textureVertexLength = 8;
 
 export class Mesh {
     verticies: Array<number[]>;
     indicies: Array<number>;
-    shader: Shader;
-    vao: WebGLVertexArrayObjectOES;
+    vao: WebGLVertexArrayObject;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
     drawMode: number = gl.TRIANGLES;
+    shader: Shader;
 
     _transform: mat4
     get transform(): mat4 { return this._transform };
@@ -29,16 +32,16 @@ export class Mesh {
     constructor(verticies: Array<number[]>, indicies: Array<number>, shader: Shader) {
         this.verticies = verticies;
         this.indicies = indicies;
-        this.shader = shader;
-        this.vao = createVertexArray();
+        this.vao = gl.createVertexArray()!;
         this.vbo = gl.createBuffer()!;
         this.ebo = gl.createBuffer()!;
         this._transform = mat4.create();
+        this.shader = shader;
         this.setupMesh();
     }
 
     setupMesh() {   
-        bindVertexArray(this.vao);
+        gl.bindVertexArray(this.vao);
 
         let verticies: Array<number> = [];
         for (let vert of this.verticies) {
@@ -49,21 +52,26 @@ export class Mesh {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticies), gl.STATIC_DRAW);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indicies), gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indicies), gl.STATIC_DRAW);
 
-        const stride = this.shader.vertexAttributes.map(getVertexSize).reduce((a, b) => a+b, 0);
-        let offset = 0;
-        for (let va of this.shader.vertexAttributes) {
-            const vertexPosition = gl.getAttribLocation(this.shader.shaderProgram, va.name);
-            gl.enableVertexAttribArray(vertexPosition);
-            gl.vertexAttribPointer(vertexPosition, va.components, getVertexType(va), false, stride, offset);
-            offset += getVertexSize(va);
-        }
+        let isColorVertex = this.verticies[0].length == colorVertexLength;
+        let stride =  isColorVertex ? colorVertexLength*4 : textureVertexLength*4;
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 3*4);
+
+        gl.enableVertexAttribArray(2);
+        gl.vertexAttribPointer(2, isColorVertex ? 3 : 2, gl.FLOAT, false, stride, 6*4);
+
+        gl.bindVertexArray(null);
     }
 
     draw() {
-        bindVertexArray(this.vao);
-        gl.drawElements(this.drawMode, this.indicies.length, gl.UNSIGNED_SHORT, 0);
+        gl.bindVertexArray(this.vao);
+        gl.drawElements(this.drawMode, this.indicies.length, gl.UNSIGNED_INT, 0);
+        gl.bindVertexArray(null);
     }
 }
 
@@ -83,7 +91,8 @@ export class NormalMesh extends Mesh {
             vec3.scale(n, vec3.normalize(n, n), length);
             let p2 = vec3.add(vec3.create(), p1, n);
 
-            verticies.push(collate(p1, color), collate(p2, color));
+            let dn = vec3.fromValues(0,0,0);
+            verticies.push(collate(p1, dn, color), collate(p2, dn, color));
             indicies.push(idx, idx+1);
             idx += 2;
         }

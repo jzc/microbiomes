@@ -1,6 +1,6 @@
 import { Mesh, collate } from "./mesh"
-import { colorShader, basicShader } from "./shader"
 import { vec3 } from "gl-matrix"
+import { basicShader, colorShader } from "./shader";
 
 const verticies = [
     // front 
@@ -52,7 +52,7 @@ export class Cube extends Mesh {
 
 export class UnlitCube extends Mesh {
     constructor(color: number[]) {
-        super(verticies.map(v => v.position.concat(color)), indices, basicShader);        
+        super(verticies.map(v => v.position.concat([0,0,0]).concat(color)), indices, basicShader);        
     }
 }
 
