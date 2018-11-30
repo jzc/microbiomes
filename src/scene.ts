@@ -29,13 +29,13 @@ export class Scene {
 
     cameraPitch: number = 45;
     cameraYaw: number = 45;
-    cameraRadius: number = 10;
+    cameraRadius: number = 50;
     get cameraPos(): vec3 {
         return anglesToPosition(this.cameraYaw, this.cameraPitch, this.cameraRadius);
     }
 
     lightColor: vec3 = vec3.fromValues(1, 1, 1);
-    lightRadius = 25;
+    lightRadius = 100;
     lightMesh: Mesh|null = null;
     get lightTransform() {
         let pos = vec3.scale(vec3.create(), this.lightDir, -this.lightRadius);

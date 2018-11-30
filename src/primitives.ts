@@ -207,12 +207,12 @@ export class Cylinder extends Mesh {
                 if (i == n-1) {
                     indices.push(
                         ai, initAi, cai,
-                        bi, initBi, cbi,
+                        initBi, bi, cbi,
                     )
                 } else {
                     indices.push(
                         ai, ai+2, cai,
-                        bi, bi+2, cbi,
+                        bi+2, bi, cbi,
                     )
                 }
             }            

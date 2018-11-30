@@ -1,6 +1,6 @@
 import { Shader, basicShader } from "./shader";
 import { gl } from "./webgl"
-import { mat4, vec3 } from "gl-matrix"
+import { mat4, mat3, vec3 } from "gl-matrix"
 
 const colorVertexLength = 9;
 const textureVertexLength = 8;
@@ -84,10 +84,10 @@ export class NormalMesh extends Mesh {
         let verticies: Array<number[]> = [];
         let indicies: Array<number> = [];
         let idx = 0;
-        let normalTransform = mat4.transpose(mat4.create(), mat4.invert(mat4.create(), m.transform)!);
+        let normalTransform = mat3.normalFromMat4(mat3.create(),  m.transform)!;
         for (let vertex of m.verticies) {
             let p1 = vec3.transformMat4(vec3.create(),vec3.fromValues(vertex[0], vertex[1], vertex[2]), m.transform);
-            let n  = vec3.transformMat4(vec3.create(), vec3.fromValues(vertex[3], vertex[4], vertex[5]), normalTransform);
+            let n  = vec3.transformMat3(vec3.create(), vec3.fromValues(vertex[3], vertex[4], vertex[5]), normalTransform);
             vec3.scale(n, vec3.normalize(n, n), length);
             let p2 = vec3.add(vec3.create(), p1, n);
 
