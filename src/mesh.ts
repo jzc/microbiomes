@@ -21,6 +21,14 @@ export class Mesh {
         this._normal = null;
     }
 
+    setTransform(scale: mat4, rotate: mat4, translate: mat4) {
+        let transform = mat4.create()
+        mat4.multiply(transform, transform, translate);
+        mat4.multiply(transform, transform, rotate);
+        mat4.multiply(transform, transform, scale);
+        this.transform = transform;
+    }
+
     _normal: mat4 | null = null;
     get normal(): mat4 {
         if (this._normal == null) { 

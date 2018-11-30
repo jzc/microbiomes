@@ -3,7 +3,10 @@ import { colorShader } from "./shader"
 import { vec3, vec2 } from "gl-matrix"
 
 export class Terrain extends Mesh {
-    constructor(heightmap: number[][]) {
+    heightmap: number[][];
+    height: number;
+    width: number
+    constructor(heightmap: number[][], color: vec3) {
         let height = heightmap.length;
         let width = heightmap[0].length;
 
@@ -79,8 +82,6 @@ export class Terrain extends Mesh {
                 let cn = averageNormalGrid[i+1][j+1];
                 let dn = averageNormalGrid[i+1][j];
 
-                let color = vec3.fromValues(62/255, 145/255, 76/255);
-
                 if (indexGrid[i][j] == -1) {
                     verticies.push(collate(a, an, color));
                     indexGrid[i][j] = idx++;  
@@ -107,6 +108,9 @@ export class Terrain extends Mesh {
         }
 
         super(verticies, indicies, colorShader);
+        this.height = height;
+        this.width = width;
+        this.heightmap =heightmap;
     }
 }
 
@@ -161,7 +165,7 @@ class PerlinNoise {
 }
 
 export class PerlinTerrain extends Terrain {
-    constructor(ixmax: number, iymax: number, nx: number, ny: number) {
+    constructor(ixmax: number, iymax: number, nx: number, ny: number, nsmooth: number, smoothWidth: number, color: vec3) {
         let gen = new PerlinNoise(ixmax, iymax);
         let heightmap = [];
         let dx = (ixmax-1)/nx;
@@ -174,10 +178,8 @@ export class PerlinTerrain extends Terrain {
             heightmap.push(arr)
         }
 
-        const kernelWidth = 5;
-        const halfKernel = Math.floor(kernelWidth/2);
-        const smoothIters = 4;
-        for (let ns = 0; ns < smoothIters; ns++) {
+        const halfKernel = Math.floor(smoothWidth/2);
+        for (let ns = 0; ns < nsmooth; ns++) {
             for (let y = 0; y < ny; y++) {
                 for (let x = 0; x < nx; x++) {
                     let sum = 0;
@@ -195,6 +197,6 @@ export class PerlinTerrain extends Terrain {
             }
         }
 
-        super(heightmap);
+        super(heightmap, color);
     }
 }

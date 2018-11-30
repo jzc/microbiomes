@@ -45,8 +45,8 @@ const indices = [
 ];
 
 export class Cube extends Mesh {
-    constructor(color: number[]) {        
-        super(verticies.map(v => v.position.concat(v.normal).concat(color)), indices, colorShader);
+    constructor(color: vec3) {        
+        super(verticies.map(v => v.position.concat(v.normal).concat(Array.from(color))), indices, colorShader);
     }
 }
 

@@ -3,6 +3,7 @@ import { Forest } from "./forest"
 let canvas = <HTMLCanvasElement> document.getElementById("glcanvas");
 let scene = new Forest(canvas);
 scene.setup();
+scene.generate();
 
 let then = Date.now();
 const interval = 1000/60;

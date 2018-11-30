@@ -19,8 +19,8 @@ function anglesToPosition(yaw: number, pitch: number, r: number) {
 }
 
 const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;        
-const sceneParams = "sceneParams";
-const renderParams = "renderParams";
+export const sceneParams = "sceneParams";
+export const renderParams = "renderParams";
 
 export class Scene {
     canvas: HTMLCanvasElement;
@@ -35,7 +35,7 @@ export class Scene {
     }
 
     lightColor: vec3 = vec3.fromValues(1, 1, 1);
-    lightRadius = 100;
+    lightRadius = 50;
     lightMesh: Mesh|null = null;
     get lightTransform() {
         let pos = vec3.scale(vec3.create(), this.lightDir, -this.lightRadius);
@@ -119,7 +119,6 @@ export class Scene {
         this.params.addRange("lightYaw", renderParams, 0, 360, 0, 1);
         this.params.addRange("lightPitch", renderParams, 0, 180, 45, 1);
         this.params.addCheckbox("drawNormals", renderParams, false);
-        this.generate();
     }
 
     generate() {
@@ -134,12 +133,14 @@ export class Scene {
     }
 
     postGenerate() {
+        let newMeshes = [];
         for (let mesh of this.meshes) {
             if (hasNormals(mesh.shader)) {
                 let color = vec3.fromValues(1, 0, 0);
-                this.meshes.push(new NormalMesh(mesh, color, .1));
+                newMeshes.push(new NormalMesh(mesh, color, .1));
             }
         }
+        this.meshes.push(...newMeshes);
     }
 
     addEventListeners() {
@@ -178,6 +179,7 @@ export class Scene {
         gl.viewport(0, 0, this.shadowWidth, this.shadowHeight);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowMapFbo);
         gl.clear(gl.DEPTH_BUFFER_BIT);
+        // gl.cullFace(gl.FRONT);
         shadowShader.use()
         shadowShader.setMatrix4("uLightSpaceMatrix", this.lightSpaceMatrix);
         for (let mesh of this.meshes) {
@@ -186,6 +188,7 @@ export class Scene {
             shadowShader.setMatrix4("uModel", mesh.transform);
             mesh.draw()
         }
+        // gl.cullFace(gl.BACK);
         
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.shadowMapTexture);
