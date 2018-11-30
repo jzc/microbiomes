@@ -12,6 +12,7 @@ export class Forest extends Scene {
         this.params.addRange("terrainYScale", sceneParams, 1, 20, 5, 1);
         this.params.addRange("terrainNSmooth", sceneParams, 0, 10, 3, 1);
         this.params.addRange("terrainSmoothWidth", sceneParams, 3, 11, 3, 2);
+        this.params.addRange("treeFrequency", sceneParams, 0, 100, 25, 1);
     }
 
     preGenerate() {
@@ -38,13 +39,14 @@ export class Forest extends Scene {
         let nsmooth = <number> this.params.get("terrainNSmooth");
         let smoothWidth =  <number> this.params.get("terrainSmoothWidth")
         let terrainYScale = <number> this.params.get("terrainYScale");
+        let treeFrequency = <number> this.params.get("treeFrequency");
         let terrainSize = 50;
         let terrain = new PerlinTerrain(noiseRes, noiseRes, vertexRes, vertexRes, nsmooth, smoothWidth, rgb(34,139,34));
         mat4.multiply(terrain.transform, terrain.transform, mat4.fromScaling(mat4.create(), [terrainSize, terrainYScale, terrainSize]));
         mat4.multiply(terrain.transform, terrain.transform, mat4.fromTranslation(mat4.create(), [-0.5, 0, -0.5]));
         this.meshes.push(terrain);
 
-        let ntrees = randomPoisson(25);
+        let ntrees = randomPoisson(treeFrequency);
         for (let i = 0; i < ntrees; i++) {
             let [trunk, top] = this.makeTree();
             let i = Math.floor(Math.random()*vertexRes);

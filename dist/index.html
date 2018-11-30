@@ -1,12 +1,57 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <title>Microbiomes</title>
         <meta charset="utf-8"/>
+        <style>
+        .sidebox {
+            width: 500px;
+            padding: 5px;
+            margin: 5px;
+            border: solid black;
+        }
+        .mainrow {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+        }
+        </style>
     </head>
     <body>
-        <canvas id="glcanvas" width="1080" height="720"></canvas>
-        <div id="sceneParams"></div>
-        <div id="renderParams"></div>
+        <div class=mainrow>
+            <canvas id="glcanvas" width="1080" height="720"></canvas>
+            <div>
+                <div class="sidebox">
+                    <h1>Microbiomes</h1>
+                    <p>
+                        Controls: click and drag on the scene to move the camera.
+                        Use the mouse wheel to zoom in and out. When modifying 
+                        the scene parameters, no changes will take place until 
+                        "Generate" is hit.
+                    </p>
+                    <p>
+                        Note: This is using WebGL2, so use an updated Firefox or Chrome
+                        (not Safari or Edge, see <a href="https://caniuse.com/#feat=webgl2">here</a>)
+                    </p>
+                </div>
+                <div id="sceneParams"  class="sidebox"><h2>Scene parameters</h2></div>
+                <div id="renderParams" class="sidebox"><h2>Render parameters</h2></div>
+                <div class="sidebox">
+                    Todo:
+                    <ul>
+                        <li>More interesting trees</li>
+                        <li>Improve shadows</li>
+                        <li>Varying color of terrain based on height</li>
+                        <li>Add more objects to the scene like rocks and grass</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
         <script src="main.js"></script>
     </body>
 </html>

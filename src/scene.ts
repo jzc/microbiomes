@@ -17,8 +17,7 @@ function anglesToPosition(yaw: number, pitch: number, r: number) {
                            r*sin(pitch),
                            r*cos(yaw)*cos(pitch))
 }
-
-const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;        
+     
 export const sceneParams = "sceneParams";
 export const renderParams = "renderParams";
 
@@ -61,7 +60,9 @@ export class Scene {
     prevY: number | undefined = undefined;
     ismousedown: boolean = false;
 
-    projection: mat4 = mat4.perspective(mat4.create(), 45, aspect, .1, 100);
+    get projection() {
+        return mat4.perspective(mat4.create(), 45, gl.canvas.clientWidth / gl.canvas.clientHeight, .1, 100);
+    } 
     view: mat4 = mat4.create();
 
     params: HTMLInputMap = new HTMLInputMap();
@@ -98,27 +99,29 @@ export class Scene {
 
     setup() {
         let sceneParamDiv = document.getElementById(sceneParams)!;
-        while (sceneParamDiv.firstChild) {
-            sceneParamDiv.removeChild(sceneParamDiv.firstChild);
+        while (sceneParamDiv.childNodes.length > 1) {
+            sceneParamDiv.removeChild(sceneParamDiv.lastChild!);
         }
 
         let scene = this;
         let generateButton = document.createElement("button");
-        generateButton.innerText
+        generateButton.innerHTML = "Generate";
         generateButton.addEventListener("click", function () {
             scene.generate();
         })
         sceneParamDiv.appendChild(generateButton);
 
         let renderParamsDiv = document.getElementById(renderParams)!;
-        while (renderParamsDiv.firstChild) {
-            renderParamsDiv.removeChild(renderParamsDiv.firstChild);
+        while (renderParamsDiv.childNodes.length > 1) {
+            renderParamsDiv.removeChild(renderParamsDiv.lastChild!);
         }
 
         this.params = new HTMLInputMap();
         this.params.addRange("lightYaw", renderParams, 0, 360, 0, 1);
         this.params.addRange("lightPitch", renderParams, 0, 180, 45, 1);
         this.params.addCheckbox("drawNormals", renderParams, false);
+        this.params.addCheckbox("drawShadowMapTexutre", renderParams, false);
+        
     }
 
     generate() {
@@ -199,6 +202,9 @@ export class Scene {
         for (let mesh of this.meshes) {
             if (!(<boolean> this.params.get("drawNormals")) &&
                 mesh instanceof NormalMesh) continue;
+
+            if (!(<boolean> this.params.get("drawShadowMapTexutre")) &&
+                mesh instanceof DebugQuad) continue;
                 
             mesh.shader.use();
             if (mesh.shader == colorShader) {
@@ -231,8 +237,19 @@ class HTMLInputMap {
         range.max = String(max);
         range.defaultValue = String(init);
         range.step = String(step);
+        let label = document.createElement("label");
+        let listener = function() {
+            label.innerHTML = key + ": " + range.value;
+        }
+        listener()
+        range.addEventListener("input", listener);
+        let innerDiv = document.createElement("div");
+        innerDiv.className = "row";
         let div = document.getElementById(divId)!;
-        div.appendChild(range);
+        innerDiv.appendChild(label);
+        innerDiv.appendChild(range);
+        div.appendChild(innerDiv);
+
         this.map.set(key, () => Number(range.value))
     }
 
@@ -241,8 +258,14 @@ class HTMLInputMap {
         checkbox.type = "checkbox";
         checkbox.name = key;
         checkbox.checked = init;
+        let label = document.createElement("label");
+        label.innerHTML = key + ": ";
+        let innerDiv = document.createElement("div");
+        innerDiv.className = "row";
+        innerDiv.appendChild(label);
+        innerDiv.appendChild(checkbox);
         let div = document.getElementById(divId)!;
-        div.appendChild(checkbox);
+        div.appendChild(innerDiv);
         this.map.set(key, () => checkbox.checked);
     }
 
