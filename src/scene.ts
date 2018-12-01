@@ -205,7 +205,7 @@ export class Scene {
 
             if (!(<boolean> this.params.get("drawShadowMapTexutre")) &&
                 mesh instanceof DebugQuad) continue;
-                
+            
             mesh.shader.use();
             if (mesh.shader == colorShader) {
                 mesh.shader.setVec3("uViewPos", this.cameraPos);

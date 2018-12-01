@@ -34,10 +34,10 @@ export class Terrain extends Mesh {
         // Add the positions and normals for each grid point.
         for (let i = 0; i < height-1; i++) {
             for (let j = 0; j < width-1; j++) {
-                let a = vec3.fromValues(i/height, heightmap[i][j], j/width);
-                let b = vec3.fromValues(i/height, heightmap[i][j+1], (j+1)/width);
-                let c = vec3.fromValues((i+1)/height, heightmap[i+1][j+1], (j+1)/width);
-                let d = vec3.fromValues((i+1)/height, heightmap[i+1][j], j/width);
+                let a = vec3.fromValues(i/(height-1), heightmap[i][j], j/(width-1));
+                let b = vec3.fromValues(i/(height-1), heightmap[i][j+1], (j+1)/(width-1));
+                let c = vec3.fromValues((i+1)/(height-1), heightmap[i+1][j+1], (j+1)/(width-1));
+                let d = vec3.fromValues((i+1)/(height-1), heightmap[i+1][j], j/(width-1));
                 let u = vec3.sub(vec3.create(), b, a);
                 let v = vec3.sub(vec3.create(), c, a);
                 let w = vec3.sub(vec3.create(), d, a);
@@ -68,7 +68,7 @@ export class Terrain extends Mesh {
 
         // Now construct all the verticies for the mesh.
         let idx = 0;
-        let indicies: Array<number> = [];
+        let indices: Array<number> = [];
         let verticies: Array<number[]> = [];
         for (let i = 0; i < height-1; i++) {
             for (let j = 0; j < width-1; j++) {
@@ -103,14 +103,119 @@ export class Terrain extends Mesh {
                 let bidx = indexGrid[i][j+1];
                 let cidx = indexGrid[i+1][j+1];
                 let didx = indexGrid[i+1][j];
-                indicies.push(aidx, bidx, cidx, aidx, cidx, didx);
+                indices.push(aidx, bidx, cidx, aidx, cidx, didx);
             }
         }
 
-        super(verticies, indicies, colorShader);
+        const sideBottom = -2;
+        const sideColor = vec3.fromValues(0.5, 0.5, 0.5);
+        //bottom side
+        let n = vec3.fromValues(-1, 0, 0);
+        idx = verticies.length;
+        for (let j = 0; j < width-1; j++) {
+            let h1 = heightmap[0][j];
+            let h2 = heightmap[0][j+1];
+            let z1 = j/(width-1);
+            let z2 = (j+1)/(width-1);
+            if (j == 0) {
+                let a = vec3.fromValues(0, h1, z1);
+                let b = vec3.fromValues(0, sideBottom, z1);
+                verticies.push(
+                    collate(a, n, sideColor),
+                    collate(b, n, sideColor),
+                )
+            }
+            let c = vec3.fromValues(0, h2, z2);
+            let d = vec3.fromValues(0, sideBottom, z2);
+            verticies.push(
+                collate(c, n, sideColor),
+                collate(d, n, sideColor),
+            )
+            indices.push(idx, idx+1, idx+2, idx+1, idx+3, idx+2);
+            idx += 2;
+        }
+        //top side
+        n = vec3.fromValues(1, 0, 0);
+        idx = verticies.length;
+        for (let j = 0; j < width-1; j++) {
+            let h1 = heightmap[height-1][j];
+            let h2 = heightmap[height-1][j+1];
+            let z1 = j/(width-1);
+            let z2 = (j+1)/(width-1);
+            if (j == 0) {
+                let a = vec3.fromValues(1, h1, z1);
+                let b = vec3.fromValues(1, sideBottom, z1);
+                verticies.push(
+                    collate(a, n, sideColor),
+                    collate(b, n, sideColor),
+                )
+            }
+            let c = vec3.fromValues(1, h2, z2);
+            let d = vec3.fromValues(1, sideBottom, z2);
+            verticies.push(
+                collate(c, n, sideColor),
+                collate(d, n, sideColor),
+            )
+            indices.push(idx, idx+2, idx+1, idx+1, idx+2, idx+3);
+            idx += 2;
+        }
+
+        //left side
+        n = vec3.fromValues(0, 0, -1);
+        idx = verticies.length;
+        for (let i = 0; i < height-1; i++) {
+            let h1 = heightmap[i][0];
+            let h2 = heightmap[i+1][0];
+            let x1 = i/(height-1);
+            let x2 = (i+1)/(height-1);
+            if (i == 0) {
+                let a = vec3.fromValues(x1, h1, 0);
+                let b = vec3.fromValues(x1, sideBottom, 0);
+                verticies.push(
+                    collate(a, n, sideColor),
+                    collate(b, n, sideColor),
+                )
+            }
+            let c = vec3.fromValues(x2, h2, 0);
+            let d = vec3.fromValues(x2, sideBottom, 0);
+            verticies.push(
+                collate(c, n, sideColor),
+                collate(d, n, sideColor),
+            )
+            indices.push(idx, idx+2, idx+1, idx+1, idx+2, idx+3);
+            idx += 2;
+        }
+
+        n = vec3.fromValues(0, 0, 1);
+        idx = verticies.length;
+        for (let i = 0; i < height-1; i++) {
+            let h1 = heightmap[i][width-1];
+            let h2 = heightmap[i+1][width-1];
+            let x1 = i/(height-1);
+            let x2 = (i+1)/(height-1);
+            if (i == 0) {
+                let a = vec3.fromValues(x1, h1, 1);
+                let b = vec3.fromValues(x1, sideBottom, 1);
+                verticies.push(
+                    collate(a, n, sideColor),
+                    collate(b, n, sideColor),
+                )
+            }
+            let c = vec3.fromValues(x2, h2, 1);
+            let d = vec3.fromValues(x2, sideBottom, 1);
+            verticies.push(
+                collate(c, n, sideColor),
+                collate(d, n, sideColor),
+            )
+            indices.push(idx, idx+1, idx+2, idx+1, idx+3, idx+2);
+            idx += 2;
+        }
+
+
+        super(verticies, indices, colorShader);
         this.height = height;
         this.width = width;
-        this.heightmap =heightmap;
+        this.heightmap = heightmap;
     }
 }
 
