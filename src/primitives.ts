@@ -60,76 +60,85 @@ export class Sphere extends Mesh {
     static cache = new Map<number, [Array<number[]>, Array<number>]>();
 
     constructor(n: number, color: vec3) {
-        let verticies = [], indices = [];
+        // Inspired by https://stackoverflow.com/questions/7687148/drawing-sphere-in-opengl-without-using-glusphere
 
-        let res = Sphere.cache.get(n)
-        if (res == undefined) {
-            let i = 0;
-            let a = vec3.fromValues(Math.sin(1*Math.PI/4), 0, Math.cos(1*Math.PI/4));
-            let b = vec3.fromValues(Math.sin(3*Math.PI/4), 0, Math.cos(3*Math.PI/4));
-            let c = vec3.fromValues(Math.sin(5*Math.PI/4), 0, Math.cos(5*Math.PI/4));
-            let d = vec3.fromValues(Math.sin(7*Math.PI/4), 0, Math.cos(7*Math.PI/4));
-            let e = vec3.fromValues(0, 1, 0);
-            let f = vec3.fromValues(0, -1, 0);
-            let ai, bi, ci, di, ei, fi;
-            let positions = [
-                (ai = i++, a),
-                (bi = i++, b),
-                (ci = i++, c),
-                (di = i++, d),
-                (ei = i++, e),
-                (fi = i++, f),
-            ];
-            
-            let tris: Array<[number, number, number]> = [
-                [ei, ai, bi], [fi, bi, ai],
-                [ei, di, ai], [fi, ai, di],
-                [ei, ci, di], [fi, di, ci],
-                [ei, bi, ci], [fi, ci, bi],
-            ];
-    
-            function subdivide(triIdxs: [number, number, number]): Array<[number, number, number]> {
-                let [ai, bi, ci] = triIdxs;
-                let [a, b, c] = [positions[ai], positions[bi], positions[ci]];
-    
-                let ac = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, c), 1/2);
-                let ab = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, b), 1/2);
-                let bc = vec3.scale(vec3.create(), vec3.add(vec3.create(), b, c), 1/2);
-    
-                let aci = positions.length;
-                positions.push(ac);
-                let abi = positions.length;
-                positions.push(ab);
-                let bci = positions.length;
-                positions.push(bc);
-    
-                return [
-                    [ai, abi, aci],
-                    [abi, bci, aci],
-                    [abi, bi, bci],
-                    [aci, bci, ci],
-                ]
-            }
-    
-            for (let i = 0; i < n; i++) {
-                let newTris: Array<[number, number, number]>  = [];
-                for (let tri of tris) {
-                    newTris.push(...subdivide(tri))
-                }
-                tris = newTris;
-            }
-    
+        // Construct an octahedron centered around the origin.
+        let i = 0;
+        let a = vec3.fromValues(Math.sin(1*Math.PI/4), 0, Math.cos(1*Math.PI/4));
+        let b = vec3.fromValues(Math.sin(3*Math.PI/4), 0, Math.cos(3*Math.PI/4));
+        let c = vec3.fromValues(Math.sin(5*Math.PI/4), 0, Math.cos(5*Math.PI/4));
+        let d = vec3.fromValues(Math.sin(7*Math.PI/4), 0, Math.cos(7*Math.PI/4));
+        let e = vec3.fromValues(0, 1, 0);
+        let f = vec3.fromValues(0, -1, 0);
+        let ai, bi, ci, di, ei, fi;
+        let positions = [
+            (ai = i++, a),
+            (bi = i++, b),
+            (ci = i++, c),
+            (di = i++, d),
+            (ei = i++, e),
+            (fi = i++, f),
+        ];
+        
+        let tris: Array<[number, number, number]> = [
+            [ei, ai, bi], [fi, bi, ai],
+            [ei, di, ai], [fi, ai, di],
+            [ei, ci, di], [fi, di, ci],
+            [ei, bi, ci], [fi, ci, bi],
+        ];
+
+        // This function takes a 3-tuple of indicies, with each tuple 
+        // representing a triangle. this function returns 4 triangles
+        // that when together represent the same triangle. it does so
+        // by inscribing another triangle within the given triangle 
+        // (i.e. if you have an equilateral triangle, subdividing it 
+        // would be drawing a triangle inside of it to create a triforce)
+        function subdivide(triIdxs: [number, number, number]): Array<[number, number, number]> {
+            let [ai, bi, ci] = triIdxs;
+            let [a, b, c] = [positions[ai], positions[bi], positions[ci]];
+
+            let ac = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, c), 1/2);
+            let ab = vec3.scale(vec3.create(), vec3.add(vec3.create(), a, b), 1/2);
+            let bc = vec3.scale(vec3.create(), vec3.add(vec3.create(), b, c), 1/2);
+
+            let aci = positions.length;
+            positions.push(ac);
+            let abi = positions.length;
+            positions.push(ab);
+            let bci = positions.length;
+            positions.push(bc);
+
+            return [
+                [ai, abi, aci],
+                [abi, bci, aci],
+                [abi, bi, bci],
+                [aci, bci, ci],
+            ]
+        }
+
+        // Now, subdivide the faces of the octahedron n times, 
+        // i.e. each iteration subdivides the previous iteration's triangles 
+        // Takes O(4^n) time.
+        for (let i = 0; i < n; i++) {
+            let newTris: Array<[number, number, number]>  = [];
             for (let tri of tris) {
-                indices.push(...tri);
+                newTris.push(...subdivide(tri))
             }
-    
-            for (let position of positions) {
-                let p = vec3.normalize(vec3.create(), position);
-                verticies.push(collate(p, p, color));
-            }
-            Sphere.cache.set(n, [verticies, indices])
-        } else{
-            [verticies, indices] = res;
+            tris = newTris;
+        }
+
+        let indices = [];
+        for (let tri of tris) {
+            indices.push(...tri);
+        }
+
+        // Now create the verticies, but normalizing each position vector.
+        // Since the octahedron is centered about the origin, this will 
+        // project all the verticies onto the unit sphere.
+        let verticies = [];
+        for (let position of positions) {
+            let p = vec3.normalize(vec3.create(), position);
+            verticies.push(collate(p, p, color));
         }
 
         super(verticies, indices, colorShader);
