@@ -186,6 +186,7 @@ export class Terrain extends Mesh {
             idx += 2;
         }
 
+        //right side
         n = vec3.fromValues(0, 0, 1);
         idx = verticies.length;
         for (let i = 0; i < height-1; i++) {
@@ -211,6 +212,16 @@ export class Terrain extends Mesh {
             idx += 2;
         }
 
+        //bottom
+        n = vec3.fromValues(0, -1, 0);
+        idx = verticies.length;
+        verticies.push(
+            collate(vec3.fromValues(0, sideBottom, 0), n, sideColor),
+            collate(vec3.fromValues(0, sideBottom, 1), n, sideColor),
+            collate(vec3.fromValues(1, sideBottom, 1), n, sideColor),
+            collate(vec3.fromValues(1, sideBottom, 0), n, sideColor),
+        )
+        indices.push(idx, idx+2, idx+1, idx+3, idx+2, idx);
 
         super(verticies, indices, colorShader);
         this.height = height;

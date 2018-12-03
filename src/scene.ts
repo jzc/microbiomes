@@ -61,7 +61,7 @@ export class Scene {
     ismousedown: boolean = false;
 
     get projection() {
-        return mat4.perspective(mat4.create(), 45, gl.canvas.clientWidth / gl.canvas.clientHeight, .1, 100);
+        return mat4.perspective(mat4.create(), 45, gl.canvas.clientWidth / gl.canvas.clientHeight, .1, 500);
     } 
     view: mat4 = mat4.create();
 

@@ -7,7 +7,7 @@ const textureVertexLength = 8;
 
 export class Mesh {
     verticies: Array<number[]>;
-    indicies: Array<number>;
+    indices: Array<number>;
     vao: WebGLVertexArrayObject;
     vbo: WebGLBuffer;
     ebo: WebGLBuffer;
@@ -37,9 +37,9 @@ export class Mesh {
         return this._normal!;
     }
 
-    constructor(verticies: Array<number[]>, indicies: Array<number>, shader: Shader) {
+    constructor(verticies: Array<number[]>, indices: Array<number>, shader: Shader) {
         this.verticies = verticies;
-        this.indicies = indicies;
+        this.indices = indices;
         this.vao = gl.createVertexArray()!;
         this.vbo = gl.createBuffer()!;
         this.ebo = gl.createBuffer()!;
@@ -60,7 +60,7 @@ export class Mesh {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticies), gl.STATIC_DRAW);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ebo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indicies), gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indices), gl.STATIC_DRAW);
 
         let isColorVertex = this.verticies[0].length == colorVertexLength;
         let stride =  isColorVertex ? colorVertexLength*4 : textureVertexLength*4;
@@ -78,7 +78,7 @@ export class Mesh {
 
     draw() {
         gl.bindVertexArray(this.vao);
-        gl.drawElements(this.drawMode, this.indicies.length, gl.UNSIGNED_INT, 0);
+        gl.drawElements(this.drawMode, this.indices.length, gl.UNSIGNED_INT, 0);
         gl.bindVertexArray(null);
     }
 }
@@ -90,7 +90,7 @@ export function collate(...arrs: Array<Float32Array>) {
 export class NormalMesh extends Mesh {
     constructor(m: Mesh, color: vec3, length: number) {
         let verticies: Array<number[]> = [];
-        let indicies: Array<number> = [];
+        let indices: Array<number> = [];
         let idx = 0;
         let normalTransform = mat3.normalFromMat4(mat3.create(),  m.transform)!;
         for (let vertex of m.verticies) {
@@ -101,10 +101,10 @@ export class NormalMesh extends Mesh {
 
             let dn = vec3.fromValues(0,0,0);
             verticies.push(collate(p1, dn, color), collate(p2, dn, color));
-            indicies.push(idx, idx+1);
+            indices.push(idx, idx+1);
             idx += 2;
         }
-        super(verticies, indicies, basicShader);
+        super(verticies, indices, basicShader);
         this.drawMode = gl.LINES;
     }
 }
