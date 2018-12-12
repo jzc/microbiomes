@@ -23,14 +23,27 @@ export const renderParams = "renderParams";
 
 export class Scene {
     canvas: HTMLCanvasElement;
-    gl: WebGLRenderingContext;
     meshes: Array<Mesh> = [];
 
+    firstPerson = false;
     cameraPitch: number = 45;
     cameraYaw: number = 45;
     cameraRadius: number = 50;
+    _cameraPos = vec3.fromValues(0,0,0);
     get cameraPos(): vec3 {
-        return anglesToPosition(this.cameraYaw, this.cameraPitch, this.cameraRadius);
+        if (this.firstPerson) {
+            return this._cameraPos;
+        } else {
+            return anglesToPosition(this.cameraYaw, this.cameraPitch, this.cameraRadius);
+        }
+    }
+    get cameraLook(): vec3 {
+        if (this.firstPerson) {
+            let dir = anglesToPosition(this.cameraYaw, this.cameraPitch, this.cameraRadius);
+            return vec3.add(vec3.create(), this.cameraPos, dir);
+        } else {
+            return vec3.fromValues(0,0,0);
+        }
     }
 
     lightColor: vec3 = vec3.fromValues(1, 1, 1);
@@ -69,13 +82,19 @@ export class Scene {
 
     shadowMapFbo: WebGLFramebuffer;
     shadowMapTexture: WebGLTexture;
-    shadowWidth = 1024;
-    shadowHeight = 1024;
+    shadowWidth = 2048;
+    shadowHeight = 2048;
+
+    movingForward = false;
+    movingBackward = false;
+    strafingLeft = false;
+    strafingRight = false;
+    ascending = false;
+    descending = false;
 
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.gl = <WebGLRenderingContext> this.canvas.getContext("webgl");
 
         this.shadowMapFbo = gl.createFramebuffer()!;
         this.shadowMapTexture = gl.createTexture()!;
@@ -146,8 +165,12 @@ export class Scene {
         this.meshes.push(...newMeshes);
     }
 
+
+    
     addEventListeners() {
         let scene = this;
+        let can = <any>scene.canvas;
+        can.requestPointerLock = can.requestPointerLock || can.mozRequestPointerLock;
         this.canvas.onmousedown = function(e: MouseEvent) {
             scene.ismousedown = true;
             scene.prevX = e.clientX;
@@ -171,11 +194,111 @@ export class Scene {
             scene.cameraRadius += e.deltaY > 0 ? 1 : -1;
             if (scene.cameraRadius < 1) scene.cameraRadius = 1;
         };
+        document.addEventListener("keyup", function(e) {
+            console.log(e.key);
+            if (e.key == "f") {
+                scene.firstPerson = true;
+                if (scene.firstPerson) {
+                    can.requestPointerLock();
+                }
+            }
+            if (scene.firstPerson) {
+                if (e.key == "w") {
+                    scene.movingForward = false;
+                }
+                else if (e.key == "a") {
+                    scene.strafingLeft = false;
+                }
+                else if (e.key == "s") {
+                    scene.movingBackward = false;
+                }
+                else if (e.key == "d") {
+                    scene.strafingRight = false;
+                }
+                else if (e.key == "q") {
+                    scene.ascending = false;
+                }
+                else if (e.key == "e") {
+                    scene.descending = false;
+                }
+            }
+        })
+
+        document.addEventListener("keydown", function(e) {
+            if (scene.firstPerson) {
+                if (e.key == "w") {
+                    scene.movingForward = true;
+                }
+                else if (e.key == "a") {
+                    scene.strafingLeft = true;
+                }
+                else if (e.key == "s") {
+                    scene.movingBackward = true;
+                }
+                else if (e.key == "d") {
+                    scene.strafingRight = true;
+                } 
+                else if (e.key == "q") {
+                    scene.ascending = true;
+                }
+                else if (e.key == "e") {
+                    scene.descending = true;
+                }
+            }
+        })
+        let doc = <any>document;
+        doc.addEventListener("pointerlockchange", lockChangeAlert, false);
+        doc.addEventListener("mozpointerlockchange", lockChangeAlert, false);
+
+        function lockChangeAlert() {
+            if (doc.pointerLockElement === can ||
+                doc.mozPointerLockElement === can) {
+              console.log('The pointer lock status is now locked');
+              doc.addEventListener("mousemove", updateLook, false);
+            } else {
+              console.log('The pointer lock status is now unlocked');
+              doc.removeEventListener("mousemove", updateLook, false);
+              scene.firstPerson = false;
+            }
+        }
+
+        function updateLook(e: MouseEvent) {
+            scene.cameraPitch -= e.movementY;
+            scene.cameraYaw -= e.movementX;
+            if (scene.cameraPitch >= 90) scene.cameraPitch = 89.9;
+            if (scene.cameraPitch <= -90) scene.cameraPitch = -89.9;
+        }
     }
 
     update(dt: number) {
-        mat4.lookAt(this.view, this.cameraPos, [0, 0, 0], [0, 1, 0]);
+        mat4.lookAt(this.view, this.cameraPos, this.cameraLook, [0, 1, 0]);
         this.lightMesh!.transform = this.lightTransform;
+        if (this.firstPerson) {
+            console.log(this.movingForward);
+            let v = vec3.fromValues(0, 0, 0,);
+            if (this.movingForward) {
+                vec3.add(v, v, [sin(this.cameraYaw), 0, cos(this.cameraYaw)]);
+            }
+            if (this.movingBackward) {
+                vec3.add(v, v, [sin(this.cameraYaw+180), 0, cos(this.cameraYaw+180)]);
+            }
+            if (this.strafingRight) {
+                vec3.add(v, v, [sin(this.cameraYaw-90), 0, cos(this.cameraYaw-90)]);
+            }
+            if (this.strafingLeft) {
+                vec3.add(v, v, [sin(this.cameraYaw+90), 0, cos(this.cameraYaw+90)]);
+            }
+            if (this.ascending) {
+                vec3.add(v, v, [0, 1, 0]);
+            }
+            if (this.descending) {
+                vec3.add(v, v, [0, -1, 0]);
+            }
+            vec3.normalize(v, v);
+            vec3.scale(v, v, 0.3);
+            vec3.add(this._cameraPos, this._cameraPos, v)
+        }
+
     }
 
     draw() {
