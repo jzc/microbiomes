@@ -1,8 +1,0 @@
-Build using
-
-    $ npm install
-    $ npm run build
-
-Then either `cd dist && python -m http.server` and
-navigate to localhost:8000, or open dist/index.html
-in a browser.
